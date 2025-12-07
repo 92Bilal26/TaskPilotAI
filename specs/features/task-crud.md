@@ -64,14 +64,15 @@ Implement Task Create, Read, Update, Delete operations as REST API endpoints wit
 - [ ] Returns 403 if task belongs to different user
 - [ ] Returns 400 if validation fails
 
-### Delete Task
+### Delete Task (Hard Delete)
 - [ ] DELETE /api/tasks/{id} endpoint exists
-- [ ] Deletes task from database
+- [ ] Permanently deletes task from database (cannot recover)
 - [ ] Only deletes if task belongs to user
 - [ ] Returns 200 OK on success
 - [ ] Returns 404 if task doesn't exist
 - [ ] Returns 403 if task belongs to different user
 - [ ] Task is removed from all listings
+- [ ] Deleted tasks cannot be restored (hard delete per clarification)
 
 ## Data Model
 
@@ -102,6 +103,15 @@ interface Task {
   "updated_at": "2025-12-07T10:30:00Z"
 }
 ```
+
+## Clarifications
+
+### Session 2025-12-07
+
+- Q: How to handle concurrent edits to same task? → A: Last write wins. Later update overwrites earlier update (simplest for Phase 2).
+  - This means if two users update the same task simultaneously, the last update to be processed by the server wins.
+  - No optimistic locking or version fields needed for Phase 2.
+  - Can be enhanced with versioning in future phases.
 
 ## API Endpoints
 

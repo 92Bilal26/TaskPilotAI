@@ -90,6 +90,16 @@ Each user can only see and modify their own tasks. Task ownership is enforced at
 - [ ] JWT authentication enforced
 - [ ] Deployed to Vercel + working backend
 
+## Clarifications
+
+### Session 2025-12-07
+
+- Q: Should guest/anonymous users be supported? → A: No, authenticated users only. All users must sign up and sign in.
+- Q: How should expired JWT tokens be handled? → A: Automatic silent refresh. Backend issues refresh tokens; frontend refreshes before expiry.
+- Q: How to handle concurrent edits to same task? → A: Last write wins. Later update overwrites earlier update (simplest for Phase 2).
+- Q: Should deleted tasks be recoverable? → A: Hard delete (permanent). Tasks permanently removed from database.
+- Q: Should API requests be rate limited? → A: No rate limiting in Phase 2. Can be added in Phase 4/5 with Kubernetes.
+
 ## Architecture
 
 ```

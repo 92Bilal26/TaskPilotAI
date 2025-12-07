@@ -95,6 +95,17 @@ async function handleSignup(email: string, password: string) {
 }
 ```
 
+## Token Refresh Strategy
+
+### Automatic Silent Refresh (Clarified)
+
+- Backend issues both access tokens (7-day expiry) and refresh tokens (14-day expiry)
+- Frontend automatically refreshes access token before expiry (e.g., at 6.5 days)
+- User does not experience interruption during normal use
+- Better Auth SDK handles refresh automatically
+- If refresh token expires, user must re-login
+- Refresh tokens are stored in secure HTTP-only cookies
+
 ## User Login (Signin)
 
 ### Requirements

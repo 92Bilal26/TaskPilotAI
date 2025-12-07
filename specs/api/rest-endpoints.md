@@ -18,6 +18,13 @@ JWT tokens are issued by Better Auth during login. The token contains:
 - `email`: The user's email
 - `exp`: Token expiration time
 
+## Rate Limiting
+
+**Phase 2 Status**: No rate limiting implemented.
+- All authenticated users can make unlimited requests
+- Rate limiting will be added in Phase 4/5 with Kubernetes and API gateway
+- Better Auth handles brute-force protection for authentication endpoints (built-in)
+
 ## Response Format
 
 All responses are JSON with the following structure:
