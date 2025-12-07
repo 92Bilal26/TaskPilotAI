@@ -22,6 +22,25 @@ Phase 1 implements 5 basic level features:
 
 ## 🚀 Quick Start
 
+### ⚡ Ultra Quick Start (30 seconds)
+
+**Launch the interactive UI immediately:**
+
+```bash
+cd /home/bilal/TaskPilotAI
+uv run python -m src.tui
+```
+
+**Menu appears with options 1-9. Try these:**
+- Press `1` → Add a task
+- Press `2` → View all tasks in table
+- Press `7` → Mark a task complete
+- Press `0` → Exit
+
+Done! 🎉
+
+---
+
 ### Prerequisites
 
 - **Python**: 3.13 or higher
@@ -34,37 +53,80 @@ Phase 1 implements 5 basic level features:
 git clone https://github.com/92Bilal26/TaskPilotAI.git
 cd TaskPilotAI
 
-# Checkout phase-1 branch
-git checkout phase-1
-
 # Install dependencies using UV
 uv sync --all-extras
 ```
 
-### Running the Application
+---
+
+### 🎮 Two Ways to Use
+
+#### Option 1: Interactive UI (Recommended)
+
+**Beautiful menu-driven interface with tables, formatting, and statistics:**
+
+```bash
+uv run python -m src.tui
+```
+
+**Menu Options:**
+```
+1️⃣  Add New Task           → Create new task with title & description
+2️⃣  View All Tasks         → Display all tasks in beautiful table format
+3️⃣  View All Tasks (JSON)  → Display tasks in JSON format
+4️⃣  View Pending Tasks     → Show only incomplete tasks
+5️⃣  View Completed Tasks   → Show only completed tasks
+6️⃣  Update Task           → Modify task title or description
+7️⃣  Mark Task Complete    → Toggle task completion status
+8️⃣  Delete Task           → Remove task from list
+9️⃣  View Statistics       → See progress and task statistics
+0️⃣  Exit                  → Close application
+```
+
+**Example Walkthrough:**
+1. Press `1` → Enter title "Buy groceries" → Enter description "Milk, eggs, bread" → ✅ Task created
+2. Press `2` → See beautiful table with all tasks
+3. Press `7` → Enter ID `1` → Task marked complete ✅
+4. Press `9` → See statistics showing 1/1 tasks completed
+
+#### Option 2: Command Line (For Automation/Scripts)
 
 ```bash
 # Add a task
-python src/main.py add --title "Buy groceries" --description "Milk, eggs, bread"
+uv run python src/main.py add --title "Buy groceries" --description "Milk, eggs, bread"
 
 # List all tasks
-python src/main.py list
+uv run python src/main.py list
 
 # List pending tasks only
-python src/main.py list --status pending
+uv run python src/main.py list --status pending
 
 # List tasks as JSON
-python src/main.py list --json
+uv run python src/main.py list --json
 
 # Update a task
-python src/main.py update --id 1 --title "Buy groceries and fruits"
+uv run python src/main.py update --id 1 --title "Buy groceries and fruits"
 
 # Mark task as complete
-python src/main.py complete --id 1
+uv run python src/main.py complete --id 1
 
 # Delete a task
-python src/main.py delete --id 1
+uv run python src/main.py delete --id 1
 ```
+
+---
+
+### 📚 Comprehensive Guides
+
+This project includes detailed guides for all aspects:
+
+| Guide | Purpose | Best For |
+|-------|---------|----------|
+| **QUICK_START.md** | 30-second setup + 2-minute demo | Getting started quickly |
+| **TUI_GUIDE.md** | Complete interactive menu guide | Understanding all UI features |
+| **TESTING_GUIDE.md** | Testing instructions + 10 scenarios | Verifying everything works |
+| **CLAUDE.md** | Development methodology & architecture | Understanding the codebase |
+| **/specs/** | Detailed feature specifications | Deep technical understanding |
 
 ---
 
