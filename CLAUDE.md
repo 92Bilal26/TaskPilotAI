@@ -1,210 +1,613 @@
-# Claude Code Rules
+# Claude Code Development Guide for TaskPilotAI Phase 1
 
-This file is generated during init for the selected agent.
+**The Evolution of Todo: In-Memory Python Console App**
 
-You are an expert AI assistant specializing in Spec-Driven Development (SDD). Your primary goal is to work with the architext to build products.
+This guide explains how to use Claude Code to implement Phase 1 features following spec-driven development methodology.
 
-## Task context
+---
 
-**Your Surface:** You operate on a project level, providing guidance to users and executing development tasks via a defined set of tools.
+## Overview
 
-**Your Success is Measured By:**
-- All outputs strictly follow the user intent.
-- Prompt History Records (PHRs) are created automatically and accurately for every user prompt.
-- Architectural Decision Record (ADR) suggestions are made intelligently for significant decisions.
-- All changes are small, testable, and reference code precisely.
+TaskPilotAI Phase 1 is built using:
 
-## Core Guarantees (Product Promise)
+- **Spec-Driven Development**: Every feature starts with a detailed specification
+- **Test-First (TDD)**: Tests are written BEFORE implementation
+- **In-Memory Storage**: No database or persistence (Phase 1 only)
+- **Claude Code**: AI-powered code generation based on specs
+- **Spec-Kit Plus**: Specification management and organization
 
-- Record every user input verbatim in a Prompt History Record (PHR) after every user message. Do not truncate; preserve full multiline input.
-- PHR routing (all under `history/prompts/`):
-  - Constitution → `history/prompts/constitution/`
-  - Feature-specific → `history/prompts/<feature-name>/`
-  - General → `history/prompts/general/`
-- ADR suggestions: when an architecturally significant decision is detected, suggest: "📋 Architectural decision detected: <brief>. Document? Run `/sp.adr <title>`." Never auto‑create ADRs; require user consent.
+---
 
-## Development Guidelines
+## Key Principles
 
-### 1. Authoritative Source Mandate:
-Agents MUST prioritize and use MCP tools and CLI commands for all information gathering and task execution. NEVER assume a solution from internal knowledge; all methods require external verification.
+### 1. Specs Are the Source of Truth
 
-### 2. Execution Flow:
-Treat MCP servers as first-class tools for discovery, verification, execution, and state capture. PREFER CLI interactions (running commands and capturing outputs) over manual file creation or reliance on internal knowledge.
+Before any code is written:
 
-### 3. Knowledge capture (PHR) for Every User Input.
-After completing requests, you **MUST** create a PHR (Prompt History Record).
+1. Read the feature specification in `/specs/features/`
+2. Understand all acceptance criteria
+3. Review the data model in `/specs/data-models.md`
+4. Clarify any ambiguities before proceeding
 
-**When to create PHRs:**
-- Implementation work (code changes, new features)
-- Planning/architecture discussions
-- Debugging sessions
-- Spec/task/plan creation
-- Multi-step workflows
+**Example**: To implement Add Task, read `/specs/features/01-add-task.md` completely.
 
-**PHR Creation Process:**
+### 2. Cannot Write Code Manually
 
-1) Detect stage
-   - One of: constitution | spec | plan | tasks | red | green | refactor | explainer | misc | general
+This is non-negotiable. Your job is to:
 
-2) Generate title
-   - 3–7 words; create a slug for the filename.
+1. **Refine the specification** until it's clear and unambiguous
+2. **Ask Claude Code** to implement based on the spec
+3. **Iterate on the spec** if Claude Code's output doesn't match requirements
 
-2a) Resolve route (all under history/prompts/)
-  - `constitution` → `history/prompts/constitution/`
-  - Feature stages (spec, plan, tasks, red, green, refactor, explainer, misc) → `history/prompts/<feature-name>/` (requires feature context)
-  - `general` → `history/prompts/general/`
+You do NOT write code directly. Claude Code generates it based on your refined spec.
 
-3) Prefer agent‑native flow (no shell)
-   - Read the PHR template from one of:
-     - `.specify/templates/phr-template.prompt.md`
-     - `templates/phr-template.prompt.md`
-   - Allocate an ID (increment; on collision, increment again).
-   - Compute output path based on stage:
-     - Constitution → `history/prompts/constitution/<ID>-<slug>.constitution.prompt.md`
-     - Feature → `history/prompts/<feature-name>/<ID>-<slug>.<stage>.prompt.md`
-     - General → `history/prompts/general/<ID>-<slug>.general.prompt.md`
-   - Fill ALL placeholders in YAML and body:
-     - ID, TITLE, STAGE, DATE_ISO (YYYY‑MM‑DD), SURFACE="agent"
-     - MODEL (best known), FEATURE (or "none"), BRANCH, USER
-     - COMMAND (current command), LABELS (["topic1","topic2",...])
-     - LINKS: SPEC/TICKET/ADR/PR (URLs or "null")
-     - FILES_YAML: list created/modified files (one per line, " - ")
-     - TESTS_YAML: list tests run/added (one per line, " - ")
-     - PROMPT_TEXT: full user input (verbatim, not truncated)
-     - RESPONSE_TEXT: key assistant output (concise but representative)
-     - Any OUTCOME/EVALUATION fields required by the template
-   - Write the completed file with agent file tools (WriteFile/Edit).
-   - Confirm absolute path in output.
+### 3. Test-First (Red-Green-Refactor)
 
-4) Use sp.phr command file if present
-   - If `.**/commands/sp.phr.*` exists, follow its structure.
-   - If it references shell but Shell is unavailable, still perform step 3 with agent‑native tools.
+The TDD workflow:
 
-5) Shell fallback (only if step 3 is unavailable or fails, and Shell is permitted)
-   - Run: `.specify/scripts/bash/create-phr.sh --title "<title>" --stage <stage> [--feature <name>] --json`
-   - Then open/patch the created file to ensure all placeholders are filled and prompt/response are embedded.
+1. **Red Phase**: Write failing tests based on spec
+2. **Green Phase**: Ask Claude Code to implement code that passes tests
+3. **Refactor Phase**: Clean up code while maintaining passing tests
 
-6) Routing (automatic, all under history/prompts/)
-   - Constitution → `history/prompts/constitution/`
-   - Feature stages → `history/prompts/<feature-name>/` (auto-detected from branch or explicit feature context)
-   - General → `history/prompts/general/`
+### 4. Quality Gates Are Non-Negotiable
 
-7) Post‑creation validations (must pass)
-   - No unresolved placeholders (e.g., `{{THIS}}`, `[THAT]`).
-   - Title, stage, and dates match front‑matter.
-   - PROMPT_TEXT is complete (not truncated).
-   - File exists at the expected path and is readable.
-   - Path matches route.
+All features must pass:
 
-8) Report
-   - Print: ID, path, stage, title.
-   - On any failure: warn but do not block the main command.
-   - Skip PHR only for `/sp.phr` itself.
+- ✅ Specification exists and is detailed
+- ✅ All tests pass (`pytest -v`)
+- ✅ Code coverage ≥95% (`pytest --cov=src`)
+- ✅ No type errors (`mypy src/`)
+- ✅ PEP 8 compliant (`flake8 src/`)
+- ✅ README and documentation updated
+- ✅ No hardcoded secrets or credentials
+- ✅ Runs without warnings
 
-### 4. Explicit ADR suggestions
-- When significant architectural decisions are made (typically during `/sp.plan` and sometimes `/sp.tasks`), run the three‑part test and suggest documenting with:
-  "📋 Architectural decision detected: <brief> — Document reasoning and tradeoffs? Run `/sp.adr <decision-title>`"
-- Wait for user consent; never auto‑create the ADR.
+---
 
-### 5. Human as Tool Strategy
-You are not expected to solve every problem autonomously. You MUST invoke the user for input when you encounter situations that require human judgment. Treat the user as a specialized tool for clarification and decision-making.
+## Project Structure for Claude Code
 
-**Invocation Triggers:**
-1.  **Ambiguous Requirements:** When user intent is unclear, ask 2-3 targeted clarifying questions before proceeding.
-2.  **Unforeseen Dependencies:** When discovering dependencies not mentioned in the spec, surface them and ask for prioritization.
-3.  **Architectural Uncertainty:** When multiple valid approaches exist with significant tradeoffs, present options and get user's preference.
-4.  **Completion Checkpoint:** After completing major milestones, summarize what was done and confirm next steps. 
+```
+TaskPilotAI/
+├── .specify/memory/constitution.md     # PROJECT RULES (read first!)
+├── README.md                           # Project overview
+├── specs/                              # SPECIFICATIONS (reference before coding)
+│   ├── overview.md                     # Project scope & structure
+│   ├── data-models.md                  # Task entity definition
+│   └── features/
+│       ├── 01-add-task.md             # Feature 1 spec
+│       ├── 02-delete-task.md          # Feature 2 spec
+│       ├── 03-update-task.md          # Feature 3 spec
+│       ├── 04-view-tasks.md           # Feature 4 spec
+│       └── 05-mark-complete.md        # Feature 5 spec
+├── src/                                # SOURCE CODE (generated by Claude Code)
+│   ├── __init__.py
+│   ├── main.py                         # CLI entry point
+│   ├── models.py                       # Task data model
+│   ├── storage.py                      # In-memory storage
+│   └── commands.py                     # Command handlers
+├── tests/                              # TESTS (write first!)
+│   ├── conftest.py                     # Pytest fixtures
+│   ├── test_add_task.py                # Feature 1 tests
+│   ├── test_delete_task.py             # Feature 2 tests
+│   └── ...
+└── pyproject.toml                      # Project config
+```
 
-## Default policies (must follow)
-- Clarify and plan first - keep business understanding separate from technical plan and carefully architect and implement.
-- Do not invent APIs, data, or contracts; ask targeted clarifiers if missing.
-- Never hardcode secrets or tokens; use `.env` and docs.
-- Prefer the smallest viable diff; do not refactor unrelated code.
-- Cite existing code with code references (start:end:path); propose new code in fenced blocks.
-- Keep reasoning private; output only decisions, artifacts, and justifications.
+**Key Files to Read FIRST**:
+1. `.specify/memory/constitution.md` – PROJECT RULES
+2. `README.md` – Project overview
+3. `/specs/overview.md` – Scope and structure
+4. `/specs/data-models.md` – Data model
+5. `/specs/features/XX-feature-name.md` – Feature spec
 
-### Execution contract for every request
-1) Confirm surface and success criteria (one sentence).
-2) List constraints, invariants, non‑goals.
-3) Produce the artifact with acceptance checks inlined (checkboxes or tests where applicable).
-4) Add follow‑ups and risks (max 3 bullets).
-5) Create PHR in appropriate subdirectory under `history/prompts/` (constitution, feature-name, or general).
-6) If plan/tasks identified decisions that meet significance, surface ADR suggestion text as described above.
+---
 
-### Minimum acceptance criteria
-- Clear, testable acceptance criteria included
-- Explicit error paths and constraints stated
-- Smallest viable change; no unrelated edits
-- Code references to modified/inspected files where relevant
+## Workflow for Implementing Each Feature
 
-## Architect Guidelines (for planning)
+### Step 1: Read the Specification
 
-Instructions: As an expert architect, generate a detailed architectural plan for [Project Name]. Address each of the following thoroughly.
+```
+Read: /specs/features/01-add-task.md completely
 
-1. Scope and Dependencies:
-   - In Scope: boundaries and key features.
-   - Out of Scope: explicitly excluded items.
-   - External Dependencies: systems/services/teams and ownership.
+Understand:
+- User stories and why they matter
+- All acceptance criteria (Given-When-Then)
+- Edge cases to handle
+- Input/output contracts
+- Data model requirements
+- Error handling requirements
+```
 
-2. Key Decisions and Rationale:
-   - Options Considered, Trade-offs, Rationale.
-   - Principles: measurable, reversible where possible, smallest viable change.
+### Step 2: Understand the Data Model
 
-3. Interfaces and API Contracts:
-   - Public APIs: Inputs, Outputs, Errors.
-   - Versioning Strategy.
-   - Idempotency, Timeouts, Retries.
-   - Error Taxonomy with status codes.
+```
+Read: /specs/data-models.md
 
-4. Non-Functional Requirements (NFRs) and Budgets:
-   - Performance: p95 latency, throughput, resource caps.
-   - Reliability: SLOs, error budgets, degradation strategy.
-   - Security: AuthN/AuthZ, data handling, secrets, auditing.
-   - Cost: unit economics.
+Understand:
+- Task entity structure
+- Field types and constraints
+- Storage structure (in-memory Python list)
+- ID auto-increment behavior
+- Timestamp format (ISO 8601)
+```
 
-5. Data Management and Migration:
-   - Source of Truth, Schema Evolution, Migration and Rollback, Data Retention.
+### Step 3: Write Test Cases (RED Phase)
 
-6. Operational Readiness:
-   - Observability: logs, metrics, traces.
-   - Alerting: thresholds and on-call owners.
-   - Runbooks for common tasks.
-   - Deployment and Rollback strategies.
-   - Feature Flags and compatibility.
+Ask Claude Code:
 
-7. Risk Analysis and Mitigation:
-   - Top 3 Risks, blast radius, kill switches/guardrails.
+```
+"Based on /specs/features/01-add-task.md, write comprehensive test cases for add_task in tests/test_add_task.py.
 
-8. Evaluation and Validation:
-   - Definition of Done (tests, scans).
-   - Output Validation for format/requirements/safety.
+Include:
+- Test for creating task with title only
+- Test for creating task with title and description
+- Test for auto-incremented IDs
+- Test for validation errors (empty title, too long)
+- Test for ISO 8601 timestamps
+- Test for success message with ID
 
-9. Architectural Decision Record (ADR):
-   - For each significant decision, create an ADR and link it.
+Run pytest -v to verify tests fail (RED phase)"
+```
 
-### Architecture Decision Records (ADR) - Intelligent Suggestion
+### Step 4: Implement Features (GREEN Phase)
 
-After design/architecture work, test for ADR significance:
+Ask Claude Code:
 
-- Impact: long-term consequences? (e.g., framework, data model, API, security, platform)
-- Alternatives: multiple viable options considered?
-- Scope: cross‑cutting and influences system design?
+```
+"Implement add_task function in src/storage.py to make failing tests pass.
 
-If ALL true, suggest:
-📋 Architectural decision detected: [brief-description]
-   Document reasoning and tradeoffs? Run `/sp.adr [decision-title]`
+Requirements from /specs/features/01-add-task.md:
+- Accept title (required, 1-200 chars) and description (optional, max 1000)
+- Auto-increment task ID
+- Store task in memory with ISO 8601 timestamps
+- Return created task
 
-Wait for consent; never auto-create ADRs. Group related decisions (stacks, authentication, deployment) into one ADR when appropriate.
+Follow Python best practices:
+- Type hints for all function parameters and returns
+- Docstring explaining what function does
+- Input validation with clear error messages
 
-## Basic Project Structure
+Run pytest -v to verify all tests pass (GREEN phase)"
+```
 
-- `.specify/memory/constitution.md` — Project principles
-- `specs/<feature>/spec.md` — Feature requirements
-- `specs/<feature>/plan.md` — Architecture decisions
-- `specs/<feature>/tasks.md` — Testable tasks with cases
-- `history/prompts/` — Prompt History Records
-- `history/adr/` — Architecture Decision Records
-- `.specify/` — SpecKit Plus templates and scripts
+### Step 5: Quality Verification
 
-## Code Standards
-See `.specify/memory/constitution.md` for code quality, testing, performance, security, and architecture principles.
+Ask Claude Code:
+
+```
+"Run all quality checks for the add_task feature:
+
+pytest -v --cov=src
+mypy src/
+flake8 src/ tests/
+
+If any checks fail, fix them. All gates must pass."
+```
+
+### Step 6: Document
+
+Update README.md and docstrings if needed. Create PHR (Prompt History Record) for the feature.
+
+---
+
+## How to Reference Specifications
+
+When asking Claude Code to implement features:
+
+### Reference Format
+```
+Based on /specs/features/XX-feature-name.md:
+- What to build (from User Stories section)
+- How to build it (from Requirements section)
+- Success criteria (from Success Criteria section)
+```
+
+### Example
+```
+"Implement delete_task based on /specs/features/02-delete-task.md:
+
+From User Story 1:
+- Remove task by ID
+- Return success message
+- Maintain ID sequence (don't reuse IDs)
+
+From Functional Requirements:
+- Accept --id argument (required, positive integer)
+- Validate task exists
+- Remove from in-memory storage
+- Return error if task not found
+
+Run pytest tests/test_delete_task.py to verify"
+```
+
+---
+
+## Module Structure for Claude Code
+
+### src/main.py (CLI Entry Point)
+
+Handles:
+- Command-line argument parsing
+- Route commands to appropriate handlers
+- Output formatting and error handling
+- Exit codes (0 for success, 1 for user error, 2 for system error)
+
+**Responsibilities**:
+- Parse `python main.py <command> [args]`
+- Call appropriate function from `src/commands.py`
+- Format and print output
+- Handle exceptions gracefully
+
+### src/models.py (Task Data Model)
+
+Defines:
+- Task entity structure (dataclass or dict)
+- Field types and constraints
+- Validation methods
+- Type hints
+
+**Key Type**: `Task = Dict[str, Any]` with fields: id, title, description, completed, created_at, updated_at
+
+### src/storage.py (In-Memory Storage)
+
+Manages:
+- Module-level `tasks: List[Dict] = []`
+- Module-level `next_id: int = 1`
+- Functions for all CRUD operations
+- ID auto-increment logic
+
+**Functions**:
+```python
+def add_task(title: str, description: str = "") -> Dict
+def delete_task(task_id: int) -> bool
+def update_task(task_id: int, title: str = None, description: str = None) -> Dict
+def get_task(task_id: int) -> Dict
+def list_tasks(status: str = "all") -> List[Dict]
+def mark_complete(task_id: int) -> Dict
+```
+
+### src/commands.py (Command Handlers)
+
+Implements:
+- Argument parsing and validation
+- Calls to storage functions
+- Error handling and messages
+- Output formatting
+
+**Functions**:
+- `handle_add(title, description)`
+- `handle_delete(task_id)`
+- `handle_update(task_id, title, description)`
+- `handle_list(status, json_output)`
+- `handle_complete(task_id)`
+
+### tests/ (Test Files)
+
+Structure:
+```
+tests/
+├── conftest.py                  # Pytest fixtures
+├── test_add_task.py             # Tests for add feature
+├── test_delete_task.py          # Tests for delete feature
+├── test_update_task.py          # Tests for update feature
+├── test_view_tasks.py           # Tests for view feature
+└── test_mark_complete.py        # Tests for complete feature
+```
+
+**Fixtures** (in conftest.py):
+- `empty_storage()` – Reset storage to empty list
+- `sample_tasks()` – Create test tasks
+- `task_storage()` – Reset storage for each test
+
+---
+
+## Code Quality Requirements
+
+### Type Hints (100% Required)
+
+```python
+# GOOD
+def add_task(title: str, description: str = "") -> Dict[str, Any]:
+    """Create a new task with given title and optional description."""
+    pass
+
+# BAD (missing types)
+def add_task(title, description=""):
+    pass
+```
+
+### Docstrings (All Public Functions)
+
+```python
+def add_task(title: str, description: str = "") -> Dict[str, Any]:
+    """
+    Create a new task with the given title and optional description.
+
+    Args:
+        title: Task title (required, 1-200 characters)
+        description: Optional task description (max 1000 characters)
+
+    Returns:
+        Created task object with auto-assigned ID
+
+    Raises:
+        ValueError: If title is empty or exceeds 200 characters
+        ValueError: If description exceeds 1000 characters
+    """
+    pass
+```
+
+### Error Messages (Consistent Format)
+
+```python
+# Always use "Error: " prefix
+raise ValueError("Error: Title required (1-200 characters)")
+
+# User-friendly messages
+raise ValueError("Error: Task ID 5 not found")
+
+# NOT: "Invalid input" or "Something went wrong"
+```
+
+### PEP 8 Compliance
+
+- Max line length: 100 characters
+- 4 spaces per indentation (not tabs)
+- Class names: PascalCase
+- Function names: snake_case
+- Constants: UPPER_SNAKE_CASE
+
+---
+
+## Testing Strategy
+
+### Test File Structure
+
+```python
+# tests/test_add_task.py
+import pytest
+from src.storage import add_task
+from tests.conftest import empty_storage
+
+class TestAddTask:
+    """Tests for add_task feature."""
+
+    def test_add_task_with_title_only(self, empty_storage):
+        """User Story 1: Create task with title only."""
+        result = add_task("Buy groceries")
+        assert result["id"] == 1
+        assert result["title"] == "Buy groceries"
+        assert result["description"] == ""
+        assert result["completed"] is False
+
+    def test_add_task_with_title_and_description(self, empty_storage):
+        """User Story 2: Create task with title and description."""
+        result = add_task("Buy groceries", "Milk, eggs, bread")
+        assert result["id"] == 1
+        assert result["title"] == "Buy groceries"
+        assert result["description"] == "Milk, eggs, bread"
+
+    def test_auto_increment_ids(self, empty_storage):
+        """Test that IDs auto-increment correctly."""
+        task1 = add_task("Task 1")
+        task2 = add_task("Task 2")
+        task3 = add_task("Task 3")
+        assert task1["id"] == 1
+        assert task2["id"] == 2
+        assert task3["id"] == 3
+
+    def test_validation_empty_title(self):
+        """Edge case: Empty title should raise error."""
+        with pytest.raises(ValueError, match="Title required"):
+            add_task("")
+
+    def test_validation_title_too_long(self):
+        """Edge case: Title exceeding 200 chars should raise error."""
+        long_title = "x" * 201
+        with pytest.raises(ValueError, match="max 200 characters"):
+            add_task(long_title)
+```
+
+### Test Fixtures (conftest.py)
+
+```python
+import pytest
+from src.storage import tasks, next_id
+
+@pytest.fixture
+def empty_storage():
+    """Clear storage before each test."""
+    tasks.clear()
+    next_id = 1
+    yield
+    tasks.clear()
+    next_id = 1
+
+@pytest.fixture
+def sample_tasks(empty_storage):
+    """Create sample tasks for testing."""
+    task1 = add_task("Task 1", "Description 1")
+    task2 = add_task("Task 2", "Description 2")
+    mark_complete(task2["id"])  # Mark second task complete
+    return [task1, task2]
+```
+
+---
+
+## Running Quality Checks
+
+### Before Submitting Each Feature
+
+```bash
+# 1. Run all tests with coverage
+pytest -v --cov=src --cov-report=term-missing
+
+# 2. Type checking
+mypy src/
+
+# 3. Style checking
+flake8 src/ tests/
+
+# 4. Summary
+echo "All quality gates passed!" if all checks pass
+```
+
+---
+
+## Conversation with Claude Code
+
+### Good Prompts
+
+```
+"Based on /specs/features/01-add-task.md, implement the add_task function
+in src/storage.py. Include:
+- Input validation (title 1-200 chars, description max 1000)
+- Auto-increment ID starting from 1
+- ISO 8601 timestamps
+- Type hints and docstring
+- Proper error messages
+
+Run: pytest tests/test_add_task.py -v"
+```
+
+### Bad Prompts
+
+```
+"Write code to add tasks" (too vague, no spec reference)
+"Make it faster" (vague, no spec requirement)
+"Use this pattern I found" (overcomplicate, not from spec)
+```
+
+---
+
+## Iterating on Implementation
+
+If Claude Code's output doesn't pass tests:
+
+1. **Analyze the test failure**:
+   ```
+   What does the test expect?
+   What does the code actually do?
+   What's the difference?
+   ```
+
+2. **Refine the spec** if unclear:
+   ```
+   "The spec says X, but test expects Y. Let me clarify..."
+   ```
+
+3. **Ask Claude Code to fix** with specific feedback:
+   ```
+   "The add_task function isn't auto-incrementing IDs correctly.
+   The test expects ID 1 for first task and ID 2 for second task.
+   Currently your code is [specific issue].
+
+   Fix by: [specific solution]"
+   ```
+
+---
+
+## Common Gotchas & How to Avoid Them
+
+### 1. ID Reuse After Delete
+
+❌ **Wrong**: Delete task 2, add new task → new task gets ID 2
+✅ **Correct**: Delete task 2, add new task → new task gets ID 4 (maintains sequence)
+
+**Spec Reference**: `/specs/features/02-delete-task.md` - "maintain ID sequence"
+
+### 2. Updating Timestamps
+
+❌ **Wrong**: created_at changes when task updated
+✅ **Correct**: Only updated_at changes; created_at frozen
+
+**Spec Reference**: `/specs/data-models.md` - "created_at never modified after creation"
+
+### 3. Input Validation
+
+❌ **Wrong**: Accept title longer than 200 chars
+✅ **Correct**: Reject with error "Title max 200 characters"
+
+**Spec Reference**: `/specs/data-models.md` - "1-200 characters"
+
+### 4. Error Messages
+
+❌ **Wrong**: `Exception: error`
+✅ **Correct**: `ValueError("Error: Task ID 5 not found")`
+
+**Spec Reference**: `.specify/memory/constitution.md` - Error Handling Standards
+
+---
+
+## Phase 1 Feature Implementation Order
+
+1. **Feature 1: Add Task** (/specs/features/01-add-task.md)
+   - Foundation: creates tasks, auto-increments IDs
+   - Dependencies: none
+
+2. **Feature 2: Delete Task** (/specs/features/02-delete-task.md)
+   - Requires: working add_task for testing
+   - Key: maintain ID sequence
+
+3. **Feature 3: Update Task** (/specs/features/03-update-task.md)
+   - Requires: add_task working
+   - Key: preserve created_at, update updated_at
+
+4. **Feature 4: View Task List** (/specs/features/04-view-tasks.md)
+   - Requires: add_task, delete_task working
+   - Key: table formatting, JSON output
+
+5. **Feature 5: Mark Complete** (/specs/features/05-mark-complete.md)
+   - Requires: add_task working
+   - Key: toggle status, update timestamp
+
+---
+
+## Getting Help
+
+When stuck:
+
+1. **Re-read the spec**: `/specs/features/XX-feature-name.md`
+2. **Check test failures**: `pytest -v` shows what's expected
+3. **Reference data model**: `/specs/data-models.md` for structure
+4. **Check constitution**: `.specify/memory/constitution.md` for rules
+
+---
+
+## Success Checklist
+
+For each feature:
+
+- [ ] Specification read and understood
+- [ ] Tests written first (RED phase)
+- [ ] Tests fail initially
+- [ ] Code implemented (GREEN phase)
+- [ ] All tests pass
+- [ ] Coverage ≥95%
+- [ ] mypy passes
+- [ ] flake8 passes
+- [ ] README updated
+- [ ] Feature documented in CLAUDE.md
+
+---
+
+## Final Submission
+
+Before submitting Phase 1:
+
+- [ ] All 5 features implemented
+- [ ] 100% test pass rate
+- [ ] Coverage ≥95%
+- [ ] mypy: 0 errors
+- [ ] flake8: 0 errors
+- [ ] README complete
+- [ ] CLAUDE.md complete
+- [ ] Working console app demo
+- [ ] Git commits with meaningful messages
+- [ ] No hardcoded secrets
+
+---
+
+**Last Updated**: 2025-12-07
+**Status**: Ready for Phase 1 Implementation
+**Next**: Start with Feature 1 (Add Task) in `/specs/features/01-add-task.md`
