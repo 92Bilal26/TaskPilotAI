@@ -1,0 +1,299 @@
+{
+  "manifest_version": "1.0",
+  "skill_name": "taskpilot-blueprint",
+  "display_name": "TaskPilot Blueprint - Production App Generator",
+  "version": "1.0.0",
+  "description": "Generate production-ready task management applications with a single command using spec-driven development",
+
+  "metadata": {
+    "author": "TaskPilotAI Team",
+    "license": "MIT",
+    "repository": "https://github.com/92Bilal26/TaskPilotAI",
+    "homepage": "https://github.com/92Bilal26/TaskPilotAI",
+    "icon": "🚀",
+    "keywords": ["python", "app-generator", "task-management", "spec-driven-development"],
+    "categories": ["application-generation", "code-generation", "project-scaffolding"],
+    "created_at": "2025-12-07",
+    "updated_at": "2025-12-07"
+  },
+
+  "capabilities": {
+    "project_scaffolding": {
+      "description": "Generate complete project structure",
+      "supported": true
+    },
+    "code_generation": {
+      "description": "Generate production-quality Python code",
+      "supported": true
+    },
+    "test_generation": {
+      "description": "Generate comprehensive test suites",
+      "supported": true
+    },
+    "documentation_generation": {
+      "description": "Generate technical documentation",
+      "supported": true
+    },
+    "specification_creation": {
+      "description": "Generate detailed specifications",
+      "supported": true
+    },
+    "validation": {
+      "description": "Validate generated projects",
+      "supported": true
+    },
+    "interactive_ui_generation": {
+      "description": "Generate interactive Terminal UI",
+      "supported": true
+    }
+  },
+
+  "subagents": {
+    "spec-generator": {
+      "description": "Generates specifications and planning documents",
+      "model": "sonnet",
+      "tools": ["Read", "Write", "Glob", "Grep"],
+      "priority": "high"
+    },
+    "code-generator": {
+      "description": "Generates source code and configuration",
+      "model": "sonnet",
+      "tools": ["Write", "Edit", "Bash", "Read", "Glob"],
+      "priority": "high"
+    },
+    "test-generator": {
+      "description": "Generates test cases and fixtures",
+      "model": "haiku",
+      "tools": ["Write", "Edit", "Bash", "Read", "Grep"],
+      "priority": "high"
+    },
+    "documentation-generator": {
+      "description": "Generates guides and documentation",
+      "model": "haiku",
+      "tools": ["Write", "Read", "Glob"],
+      "priority": "medium"
+    }
+  },
+
+  "parameters": {
+    "required": [
+      "app_name"
+    ],
+    "optional": [
+      "description",
+      "features",
+      "style",
+      "database",
+      "python_version",
+      "include_tui",
+      "initialize_git"
+    ],
+    "defaults": {
+      "description": "A production-ready task management application",
+      "features": [],
+      "style": "light",
+      "database": "memory",
+      "python_version": "3.13+",
+      "include_tui": true,
+      "initialize_git": true
+    }
+  },
+
+  "output_specification": {
+    "structure": {
+      "root": "{app_name}/",
+      "directories": [
+        "src/",
+        "tests/",
+        "specs/",
+        "specs/features/",
+        "specs/contracts/",
+        ".specify/",
+        ".specify/memory/",
+        ".specify/templates/",
+        ".specify/scripts/",
+        ".claude/",
+        ".claude/agents/",
+        "history/",
+        "history/prompts/",
+        "history/prompts/general/"
+      ]
+    },
+    "expected_files": {
+      "source_code": 7,
+      "tests": 6,
+      "specifications": 7,
+      "documentation": 6,
+      "configuration": 5,
+      "other": 2
+    },
+    "expected_metrics": {
+      "total_files": 40,
+      "total_lines": 8400,
+      "source_lines": 1700,
+      "test_cases": 84,
+      "test_pass_rate": 100,
+      "type_hints_coverage": 100,
+      "code_coverage": 97.5
+    },
+    "quality_gates": [
+      "pytest: 84/84 tests passing",
+      "mypy: 0 type errors (strict mode)",
+      "flake8: 0 style errors (PEP 8)",
+      "Code coverage: ~97.5%",
+      "Type hints: 100% coverage"
+    ]
+  },
+
+  "execution": {
+    "estimated_time_minutes": 15,
+    "estimated_time_range": "10-30",
+    "cost_estimate": "medium",
+    "parallelizable": true,
+    "requires_internet": false,
+    "requires_git": true,
+    "requires_python": "3.13+",
+    "disk_space_required_mb": 50,
+    "memory_required_mb": 512
+  },
+
+  "use_cases": [
+    "Rapid prototyping of task management applications",
+    "Hackathon project generation (Phase 1 deliverable)",
+    "Team training in spec-driven development",
+    "Portfolio project creation for interviews",
+    "Template for production applications",
+    "Educational example implementation"
+  ],
+
+  "files": {
+    "readme": "README.md",
+    "skill_definition": "skill-definition.yaml",
+    "manifest": "manifest.json",
+    "scripts": [
+      "scripts/generate-project.sh",
+      "scripts/validate-output.sh",
+      "scripts/setup-git.sh"
+    ],
+    "templates": {
+      "specifications": [
+        "templates/constitution-template.md",
+        "templates/feature-spec-template.md",
+        "templates/api-contract-template.md",
+        "templates/plan-template.md",
+        "templates/tasks-template.md"
+      ],
+      "source_code": [
+        "templates/main.py.template",
+        "templates/tui.py.template",
+        "templates/commands.py.template",
+        "templates/models.py.template",
+        "templates/storage.py.template"
+      ],
+      "tests": [
+        "templates/test-template.py",
+        "templates/conftest.py.template"
+      ],
+      "configuration": [
+        "templates/pyproject.toml.template",
+        "templates/pytest.ini.template",
+        "templates/gitignore.template"
+      ],
+      "documentation": [
+        "templates/README.md.template",
+        "templates/CLAUDE.md.template",
+        "templates/QUICK_START.md.template",
+        "templates/TUI_GUIDE.md.template",
+        "templates/TESTING_GUIDE.md.template"
+      ]
+    }
+  },
+
+  "compatibility": {
+    "platforms": [
+      "claude-code",
+      "claude-api",
+      "claude-sdk",
+      "claude-web"
+    ],
+    "python_versions": [
+      "3.13+",
+      "3.12+",
+      "3.11+"
+    ],
+    "operating_systems": [
+      "linux",
+      "macos",
+      "windows-wsl2"
+    ]
+  },
+
+  "dependencies": {
+    "python": {
+      "minimum": "3.13",
+      "recommended": "3.13+"
+    },
+    "external_tools": [
+      "bash",
+      "git"
+    ],
+    "python_packages": "0 required (generates requirements.txt with 0 external dependencies)"
+  },
+
+  "limitations": [
+    "Python applications only (JavaScript/TypeScript support coming in Phase 2+)",
+    "In-memory storage only (database support coming in Phase 2+)",
+    "Single user scope (multi-user authentication coming in Phase 2+)",
+    "CLI + TUI only (web UI coming in Phase 2+)",
+    "Requires write permissions to target directory"
+  ],
+
+  "roadmap": {
+    "phase_2": {
+      "estimated_date": "Q1 2026",
+      "features": [
+        "Full-stack web application support (Next.js + FastAPI)",
+        "Database schema generation (SQLModel + Neon PostgreSQL)",
+        "Authentication integration (Better Auth)",
+        "API endpoint generation",
+        "JavaScript/TypeScript support"
+      ]
+    },
+    "phase_3": {
+      "estimated_date": "Q2 2026",
+      "features": [
+        "AI chatbot templates (OpenAI Agents SDK)",
+        "MCP server generation",
+        "Agent integration",
+        "Multi-language support (Urdu, Spanish, etc.)"
+      ]
+    }
+  },
+
+  "support": {
+    "documentation_url": "https://github.com/92Bilal26/TaskPilotAI/tree/main/.claude/skills/taskpilot-blueprint",
+    "issues_url": "https://github.com/92Bilal26/TaskPilotAI/issues",
+    "discussions_url": "https://github.com/92Bilal26/TaskPilotAI/discussions",
+    "email": "support@taskpilotai.dev"
+  },
+
+  "validation": {
+    "enabled": true,
+    "checks": [
+      "project_structure",
+      "code_quality",
+      "test_coverage",
+      "type_safety",
+      "style_compliance",
+      "documentation",
+      "specification_completeness"
+    ]
+  },
+
+  "status": {
+    "current": "active",
+    "stability": "stable",
+    "maturity": "production",
+    "maintenance_status": "actively-maintained"
+  }
+}
