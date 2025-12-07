@@ -1,14 +1,18 @@
 # API Documentation
 
-## Auth Endpoints
-- POST /auth/signup
-- POST /auth/signin  
-- POST /auth/refresh
+## Authentication Endpoints
+- POST /auth/signup - Register new user
+- POST /auth/signin - Login user
+- POST /auth/refresh - Refresh access token
 
 ## Task Endpoints
-- GET /tasks
-- POST /tasks
-- GET /tasks/{id}
-- PUT /tasks/{id}
-- DELETE /tasks/{id}
-- PATCH /tasks/{id}/complete
+- GET /tasks - List all user tasks
+- POST /tasks - Create new task
+- GET /tasks/{id} - Get specific task
+- PUT /tasks/{id} - Update task
+- DELETE /tasks/{id} - Delete task
+- PATCH /tasks/{id}/complete - Toggle task completion
+
+## Filtering Endpoints
+- GET /tasks/filter/pending - Get pending tasks
+- GET /tasks/filter/completed - Get completed tasks

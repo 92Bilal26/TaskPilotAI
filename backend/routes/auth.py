@@ -4,7 +4,7 @@ from sqlmodel import Session, select
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
-import jwt
+from jose import jwt
 from config import settings
 from db import get_session
 from models import User
@@ -40,7 +40,11 @@ async def signup(request: SignupRequest, session: Session = Depends(get_session)
     session.add(user)
     session.commit()
     session.refresh(user)
-    return {"access_token": create_token(user.id), "refresh_token": create_token(user.id, settings.JWT_REFRESH_EXPIRY_SECONDS), "token_type": "bearer"}
+    return {
+        "access_token": create_token(user.id),
+        "refresh_token": create_token(user.id, settings.JWT_REFRESH_EXPIRY_SECONDS),
+        "token_type": "bearer"
+    }
 
 @router.post("/signin", response_model=TokenResponse)
 async def signin(request: SigninRequest, session: Session = Depends(get_session)):
@@ -48,7 +52,11 @@ async def signin(request: SigninRequest, session: Session = Depends(get_session)
     user = session.exec(statement).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    return {"access_token": create_token(user.id), "refresh_token": create_token(user.id, settings.JWT_REFRESH_EXPIRY_SECONDS), "token_type": "bearer"}
+    return {
+        "access_token": create_token(user.id),
+        "refresh_token": create_token(user.id, settings.JWT_REFRESH_EXPIRY_SECONDS),
+        "token_type": "bearer"
+    }
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh(refresh_token: str):
@@ -57,6 +65,10 @@ async def refresh(refresh_token: str):
         user_id = payload.get("user_id")
         if not user_id:
             raise HTTPException(status_code=401, detail="Invalid refresh token")
-        return {"access_token": create_token(user_id), "refresh_token": create_token(user_id, settings.JWT_REFRESH_EXPIRY_SECONDS), "token_type": "bearer"}
-    except jwt.InvalidTokenError:
+        return {
+            "access_token": create_token(user_id),
+            "refresh_token": create_token(user_id, settings.JWT_REFRESH_EXPIRY_SECONDS),
+            "token_type": "bearer"
+        }
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid refresh token")

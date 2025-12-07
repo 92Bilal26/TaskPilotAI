@@ -1,6 +1,8 @@
+"""Pytest configuration and fixtures"""
 import pytest
-from sqlmodel import Session, create_engine, SQLModel
+from sqlmodel import SQLModel, create_engine
 from sqlmodel.pool import StaticPool
+from fastapi.testclient import TestClient
 
 @pytest.fixture(name="session")
 def session_fixture():
@@ -12,3 +14,12 @@ def session_fixture():
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         yield session
+
+@pytest.fixture(name="client")
+def client_fixture(session):
+    def get_session_override():
+        return session
+    app.dependency_overrides[get_session] = get_session_override
+    client = TestClient(app)
+    yield client
+    app.dependency_overrides.clear()

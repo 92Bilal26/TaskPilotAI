@@ -1,5 +1,5 @@
 """Task CRUD routes"""
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends, status, Request
 from sqlmodel import Session, select
 from typing import List
 from db import get_session
@@ -9,12 +9,14 @@ from schemas import TaskCreate, TaskUpdate, TaskResponse
 router = APIRouter(prefix="/tasks", tags=["tasks"])
 
 @router.get("", response_model=List[TaskResponse])
-async def get_tasks(session: Session = Depends(get_session), user_id: str = None):
+async def get_tasks(request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
     statement = select(Task).where(Task.user_id == user_id)
     return session.exec(statement).all()
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
-async def create_task(task: TaskCreate, session: Session = Depends(get_session), user_id: str = None):
+async def create_task(task: TaskCreate, request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
     db_task = Task(**task.dict(), user_id=user_id)
     session.add(db_task)
     session.commit()
@@ -22,14 +24,16 @@ async def create_task(task: TaskCreate, session: Session = Depends(get_session),
     return db_task
 
 @router.get("/{task_id}", response_model=TaskResponse)
-async def get_task(task_id: str, session: Session = Depends(get_session), user_id: str = None):
+async def get_task(task_id: str, request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
     task = session.get(Task, task_id)
     if not task or task.user_id != user_id:
         raise HTTPException(status_code=404)
     return task
 
 @router.put("/{task_id}", response_model=TaskResponse)
-async def update_task(task_id: str, task_update: TaskUpdate, session: Session = Depends(get_session), user_id: str = None):
+async def update_task(task_id: str, task_update: TaskUpdate, request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
     task = session.get(Task, task_id)
     if not task or task.user_id != user_id:
         raise HTTPException(status_code=404)
@@ -42,7 +46,8 @@ async def update_task(task_id: str, task_update: TaskUpdate, session: Session = 
     return task
 
 @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_task(task_id: str, session: Session = Depends(get_session), user_id: str = None):
+async def delete_task(task_id: str, request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
     task = session.get(Task, task_id)
     if not task or task.user_id != user_id:
         raise HTTPException(status_code=404)
@@ -50,7 +55,8 @@ async def delete_task(task_id: str, session: Session = Depends(get_session), use
     session.commit()
 
 @router.patch("/{task_id}/complete")
-async def toggle_task(task_id: str, session: Session = Depends(get_session), user_id: str = None):
+async def toggle_task(task_id: str, request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
     task = session.get(Task, task_id)
     if not task or task.user_id != user_id:
         raise HTTPException(status_code=404)
@@ -59,3 +65,15 @@ async def toggle_task(task_id: str, session: Session = Depends(get_session), use
     session.commit()
     session.refresh(task)
     return task
+
+@router.get("/filter/pending", response_model=List[TaskResponse])
+async def get_pending_tasks(request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
+    statement = select(Task).where((Task.user_id == user_id) & (Task.completed == False))
+    return session.exec(statement).all()
+
+@router.get("/filter/completed", response_model=List[TaskResponse])
+async def get_completed_tasks(request: Request, session: Session = Depends(get_session)):
+    user_id = request.state.user_id
+    statement = select(Task).where((Task.user_id == user_id) & (Task.completed == True))
+    return session.exec(statement).all()
