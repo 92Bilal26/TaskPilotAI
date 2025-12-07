@@ -1,8 +1,14 @@
-# Claude Code Development Guide for TaskPilotAI Phase 1
+# Claude Code Development Guide for TaskPilotAI
 
-**The Evolution of Todo: In-Memory Python Console App**
+**The Evolution of Todo: From Console App to Full-Stack Web Application**
 
-This guide explains how to use Claude Code to implement Phase 1 features following spec-driven development methodology.
+This guide explains how to use Claude Code to implement features across all phases following spec-driven development methodology.
+
+## Phase Selection
+
+- **Phase 1**: In-Memory Python Console App → See branch `phase-1`
+- **Phase 2**: Full-Stack Web Application → Current branch `phase-2`
+- **Phase 3+**: AI Chatbot, Kubernetes, Cloud Deployment → Future branches
 
 ---
 
@@ -608,6 +614,205 @@ Before submitting Phase 1:
 
 ---
 
+---
+
+## Phase 2: Full-Stack Web Application (Current)
+
+### Phase 2 Overview
+
+Transform Phase 1 console app into a multi-user web application with:
+- **Frontend**: Next.js with Better Auth
+- **Backend**: FastAPI with JWT
+- **Database**: Neon PostgreSQL
+- **Points**: 150 | **Due**: December 14, 2025
+
+### Phase 2 Project Structure
+
+```
+TaskPilotAI/
+├── specs/                   # Spec-Kit Plus specifications
+│   ├── overview.md
+│   ├── features/
+│   │   ├── task-crud.md
+│   │   └── authentication.md
+│   ├── api/
+│   │   └── rest-endpoints.md
+│   └── database/
+│       └── schema.md
+│
+├── frontend/                # Next.js 16+ application
+│   ├── CLAUDE.md           # Frontend guidelines
+│   ├── app/                # App Router
+│   │   ├── page.tsx
+│   │   ├── dashboard/
+│   │   └── layout.tsx
+│   ├── components/
+│   │   ├── TaskForm.tsx
+│   │   └── TaskList.tsx
+│   ├── lib/
+│   │   ├── auth-client.ts  # Better Auth integration
+│   │   └── api.ts          # API client
+│   └── package.json
+│
+├── backend/                 # FastAPI application
+│   ├── CLAUDE.md           # Backend guidelines
+│   ├── main.py             # FastAPI entry point
+│   ├── models.py           # SQLModel: User, Task
+│   ├── db.py               # Database connection
+│   ├── routes/
+│   │   ├── auth.py         # Auth endpoints (Better Auth)
+│   │   └── tasks.py        # Task CRUD endpoints
+│   ├── requirements.txt
+│   └── .env
+│
+├── .spec-kit/
+│   └── config.yaml         # Spec-Kit configuration
+│
+├── CLAUDE.md               # This file
+└── README.md
+```
+
+### Phase 2 Key Specifications
+
+**Read these in order:**
+
+1. `@specs/overview.md` – Architecture overview
+2. `@specs/database/schema.md` – Database design
+3. `@specs/api/rest-endpoints.md` – API contracts
+4. `@specs/features/authentication.md` – Auth flow
+5. `@specs/features/task-crud.md` – Task operations
+
+### Phase 2 Workflow
+
+#### Step 1: Backend Implementation
+
+```
+1. Create SQLModel models (User, Task)
+2. Create database connection (db.py)
+3. Implement JWT authentication
+4. Implement Task CRUD endpoints
+5. Write and pass tests
+6. Verify all quality gates
+```
+
+#### Step 2: Frontend Implementation
+
+```
+1. Setup Better Auth SDK
+2. Create API client with token handling
+3. Build UI components (login, dashboard, tasks)
+4. Integrate with backend
+5. Write tests
+6. Deploy to Vercel
+```
+
+#### Step 3: Integration Testing
+
+```
+1. User signup flow
+2. User login flow
+3. Create task via API
+4. List user's tasks
+5. Update/delete tasks
+6. User isolation (can't see other users' tasks)
+```
+
+### Phase 2 Quality Gates
+
+All of these must pass:
+
+- [ ] Backend database schema created
+- [ ] All 6 REST API endpoints implemented
+- [ ] JWT authentication middleware working
+- [ ] Frontend and backend integrated
+- [ ] Better Auth signup/signin working
+- [ ] Task isolation per user enforced
+- [ ] Comprehensive tests (unit + integration)
+- [ ] Frontend deployed to Vercel
+- [ ] Backend running and accessible
+- [ ] mypy: 0 errors
+- [ ] flake8: 0 errors
+- [ ] All tests passing with ≥95% coverage
+
+### Phase 2 Key Differences from Phase 1
+
+| Aspect | Phase 1 | Phase 2 |
+|--------|---------|---------|
+| **Storage** | In-memory Python list | PostgreSQL database |
+| **Persistence** | Lost on app restart | Persistent |
+| **Users** | Single user | Multi-user with auth |
+| **UI** | CLI arguments | Web UI (React) |
+| **API** | None | REST API with JWT |
+| **Deployment** | Local CLI | Vercel + Backend server |
+| **Database** | None | Neon PostgreSQL |
+| **Auth** | None | Better Auth + JWT |
+
+### Phase 2 Implementation Commands
+
+**Backend**:
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+**Frontend**:
+```bash
+cd frontend
+npm install
+npm run dev
+# Visit http://localhost:3000
+```
+
+**Database**:
+```bash
+# Create account at neon.tech
+# Copy DATABASE_URL to backend/.env
+# SQLModel creates tables automatically on startup
+```
+
+### Phase 2 Environment Variables
+
+**Backend** (`.env`):
+```
+DATABASE_URL=postgresql://user:password@host/database
+BETTER_AUTH_SECRET=your-secret-key
+JWT_SECRET=your-jwt-secret-key
+JWT_EXPIRATION_HOURS=168
+```
+
+**Frontend** (`.env.local`):
+```
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### Phase 2 API Endpoints Summary
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | /api/tasks | Create task |
+| GET | /api/tasks | List user's tasks |
+| GET | /api/tasks/{id} | Get specific task |
+| PUT | /api/tasks/{id} | Update task |
+| DELETE | /api/tasks/{id} | Delete task |
+| PATCH | /api/tasks/{id}/complete | Toggle completion |
+
+All endpoints require: `Authorization: Bearer <jwt_token>`
+
+### Phase 2 Common Gotchas
+
+1. **User Isolation**: Always filter by `user_id` from JWT token
+2. **Token Expiration**: Handle 401 errors gracefully
+3. **CORS**: Configure allowed origins for frontend
+4. **Timestamps**: Always use UTC ISO 8601 format
+5. **Response Format**: All responses must follow standard structure
+6. **Validation**: Validate at API level, not just database
+
+---
+
 **Last Updated**: 2025-12-07
-**Status**: Ready for Phase 1 Implementation
-**Next**: Start with Feature 1 (Add Task) in `/specs/features/01-add-task.md`
+**Status**: Phase 2 Specifications Created
+**Current Phase**: Phase 2 (Full-Stack Web Application)
+**Next**: Implement Backend (FastAPI)
