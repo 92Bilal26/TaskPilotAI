@@ -21,7 +21,7 @@ export function TaskCard({
   onDelete,
   onEdit,
 }: TaskCardProps) {
-  const createdDate = new Date(task.createdAt).toLocaleDateString('en-US', {
+  const createdDate = new Date(task.created_at).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
@@ -66,7 +66,7 @@ export function TaskCard({
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>Created {createdDate}</span>
-          {task.updatedAt && new Date(task.updatedAt).getTime() !== new Date(task.createdAt).getTime() && (
+          {task.updated_at && new Date(task.updated_at).getTime() !== new Date(task.created_at).getTime() && (
             <span>Modified</span>
           )}
         </div>

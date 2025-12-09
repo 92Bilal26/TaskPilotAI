@@ -185,6 +185,36 @@ export class ApiClient {
     return this.request<Task[]>("/tasks/filter/completed", { method: "GET" });
   }
 
+  // Generic HTTP methods for backward compatibility
+  async get<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: "GET" });
+  }
+
+  async post<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async put<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async patch<T>(endpoint: string, data?: any): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, { method: "DELETE" });
+  }
+
   // Utility methods
   isAuthenticated(): boolean {
     return this.getToken() !== null;

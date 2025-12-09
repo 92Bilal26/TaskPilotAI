@@ -24,16 +24,31 @@ export default function SigninPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    const result = await apiClient.post("/auth/signin", { email, password });
-    if (!result.success) {
-      setError(result.error || "Signin failed");
-    } else {
-      const data = result.data as { access_token: string; refresh_token: string };
-      localStorage.setItem("auth_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
-      router.push("/dashboard");
+
+    try {
+      const result = await apiClient.signin(email, password);
+
+      if (!result.success) {
+        // Handle specific error messages
+        const errorMsg = result.error || "Signin failed";
+        if (result.status === 401) {
+          setError("Invalid email or password");
+        } else if (result.status === 404) {
+          setError("Account not found");
+        } else {
+          setError(errorMsg);
+        }
+      } else {
+        // Token is automatically saved by apiClient.signin()
+        // Just redirect to dashboard
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      console.error("Signin error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (!isMounted) {

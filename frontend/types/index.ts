@@ -11,12 +11,12 @@ export interface User {
 
 export interface Task {
   id: string;
-  userId: string;
+  user_id: string;
   title: string;
   description?: string;
   completed: boolean;
-  createdAt: string;
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface APIResponse<T = any> {

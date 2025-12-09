@@ -1,11 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { apiClient } from "@/lib/api";
+import { useAuth } from "@/lib/useAuth";
+import { useToast } from "@/lib/useToast";
 import { Task } from "@/types";
 import { Sidebar } from "@/components/Layout/Sidebar";
 import { Header } from "@/components/Layout/Header";
 import { TaskCard } from "@/components/Tasks/TaskCard";
+import { TaskEditModal } from "@/components/Tasks/TaskEditModal";
+import { Toast } from "@/components/Toast/Toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,7 +17,8 @@ import { SearchBar } from "@/components/Search/SearchBar";
 import { Badge } from "@/components/ui/badge";
 
 export default function DashboardPage() {
-  const router = useRouter();
+  const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
+  const { toasts, removeToast, success, error } = useToast();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [title, setTitle] = useState("");
@@ -24,17 +28,14 @@ export default function DashboardPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (!token) {
-      router.push("/auth/signin");
-      return;
+    if (!authLoading && isAuthenticated) {
+      setIsMounted(true);
+      fetchTasks();
     }
-
-    setIsMounted(true);
-    fetchTasks();
-  }, [router]);
+  }, [authLoading, isAuthenticated]);
 
   // Filter tasks based on status and search
   useEffect(() => {
@@ -59,7 +60,7 @@ export default function DashboardPage() {
   }, [tasks, filterStatus, searchQuery]);
 
   const fetchTasks = async () => {
-    const result = await apiClient.get<Task[]>("/tasks");
+    const result = await apiClient.getTasks();
     if (result.success) {
       setTasks(result.data || []);
     }
@@ -69,32 +70,56 @@ export default function DashboardPage() {
     e.preventDefault();
     if (!title.trim()) return;
     setLoading(true);
-    await apiClient.post("/tasks", { title, description });
-    setTitle("");
-    setDescription("");
-    await fetchTasks();
+    const result = await apiClient.createTask(title, description);
+    if (result.success) {
+      setTitle("");
+      setDescription("");
+      success("Task created successfully!");
+      await fetchTasks();
+    } else {
+      error(result.error || "Failed to create task");
+    }
     setLoading(false);
   };
 
   const handleToggle = async (id: string) => {
-    await apiClient.patch(`/tasks/${id}/complete`);
-    await fetchTasks();
+    const result = await apiClient.toggleTask(id);
+    if (result.success) {
+      await fetchTasks();
+    } else {
+      error(result.error || "Failed to update task");
+    }
   };
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this task?")) {
-      await apiClient.delete(`/tasks/${id}`);
-      await fetchTasks();
+      const result = await apiClient.deleteTask(id);
+      if (result.success) {
+        success("Task deleted successfully!");
+        await fetchTasks();
+      } else {
+        error(result.error || "Failed to delete task");
+      }
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("refresh_token");
-    router.push("/auth/signin");
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
   };
 
-  if (!isMounted) {
+  const handleSaveEdit = async (updates: { title: string; description: string }) => {
+    if (!editingTask) return;
+    const result = await apiClient.updateTask(editingTask.id, updates);
+    if (result.success) {
+      setEditingTask(null);
+      success("Task updated successfully!");
+      await fetchTasks();
+    } else {
+      error(result.error || "Failed to update task");
+    }
+  };
+
+  if (!isMounted || authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center animate-fade-in">
         <div className="animate-spin h-12 w-12 rounded-full border-4 border-primary-200 border-t-primary-600"></div>
@@ -117,7 +142,7 @@ export default function DashboardPage() {
       <Sidebar
         items={sidebarItems}
         title="TaskPilotAI"
-        onLogout={handleLogout}
+        onLogout={logout}
         collapsed={sidebarCollapsed}
         onCollapsedChange={setSidebarCollapsed}
       />
@@ -281,6 +306,7 @@ export default function DashboardPage() {
                       task={task}
                       onComplete={() => handleToggle(task.id)}
                       onDelete={() => handleDelete(task.id)}
+                      onEdit={handleEditTask}
                     />
                   ))}
                 </div>
@@ -289,6 +315,17 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      <TaskEditModal
+        task={editingTask}
+        onClose={() => setEditingTask(null)}
+        onSave={handleSaveEdit}
+        isLoading={loading}
+      />
+
+      {/* Toasts */}
+      <Toast messages={toasts} onRemove={removeToast} />
     </div>
   );
 }

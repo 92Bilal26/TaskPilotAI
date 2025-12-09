@@ -37,16 +37,31 @@ export default function SignupPage() {
 
     setLoading(true);
     setError("");
-    const result = await apiClient.post("/auth/signup", { email, password, name });
-    if (!result.success) {
-      setError(result.error || "Signup failed");
-    } else {
-      const data = result.data as { access_token: string; refresh_token: string };
-      localStorage.setItem("auth_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
-      router.push("/dashboard");
+
+    try {
+      const result = await apiClient.signup(email, password, name);
+
+      if (!result.success) {
+        // Handle specific error messages
+        const errorMsg = result.error || "Signup failed";
+        if (result.status === 409) {
+          setError("Email already registered. Please use a different email or sign in.");
+        } else if (result.status === 400) {
+          setError("Invalid input. Please check your details and try again.");
+        } else {
+          setError(errorMsg);
+        }
+      } else {
+        // Token is automatically saved by apiClient.signup()
+        // Just redirect to dashboard
+        router.push("/dashboard");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      console.error("Signup error:", err);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   if (!isMounted) {
