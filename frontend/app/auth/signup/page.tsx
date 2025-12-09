@@ -1,19 +1,40 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiClient } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [name, setName] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
+
     setLoading(true);
     setError("");
     const result = await apiClient.post("/auth/signup", { email, password, name });
@@ -28,91 +49,179 @@ export default function SignupPage() {
     setLoading(false);
   };
 
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50 flex items-center justify-center">
+        <div className="animate-spin h-12 w-12 rounded-full border-4 border-secondary-200 border-t-secondary-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl mb-4">
-            <span className="text-white text-xl font-bold">✓</span>
+    <div className="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-primary-50 flex flex-col lg:flex-row">
+      {/* Left Side - Features */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-secondary-600 via-secondary-700 to-primary-600 flex-col justify-between p-12 relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full -ml-36 -mb-36"></div>
+
+        {/* Features Content */}
+        <div className="relative z-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl mb-8 border border-white/30 hover:bg-white/30 transition">
+            <span className="text-white text-2xl font-bold">✓</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h1>
-          <p className="text-gray-500">Join to start managing your tasks</p>
+          <h1 className="text-5xl font-bold text-white mb-4 leading-tight">
+            Join TaskPilotAI Today
+          </h1>
+          <p className="text-lg text-white/80 max-w-md">
+            Experience the future of task management with AI-powered insights and intelligent organization.
+          </p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+        {/* Benefits List */}
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 mt-1">
+              <span>🚀</span>
             </div>
+            <div>
+              <p className="text-white font-semibold">Quick Setup</p>
+              <p className="text-white/70 text-sm">Get started in seconds</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 mt-1">
+              <span>🤖</span>
+            </div>
+            <div>
+              <p className="text-white font-semibold">AI Insights</p>
+              <p className="text-white/70 text-sm">Smart task recommendations</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 mt-1">
+              <span>🔒</span>
+            </div>
+            <div>
+              <p className="text-white font-semibold">Secure & Private</p>
+              <p className="text-white/70 text-sm">Your data is encrypted</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center flex-shrink-0 mt-1">
+              <span>📱</span>
+            </div>
+            <div>
+              <p className="text-white font-semibold">Multi-Device</p>
+              <p className="text-white/70 text-sm">Access anywhere, anytime</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Sign Up Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-12 sm:px-8 md:px-12">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="mb-8 sm:mb-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Create Account</h2>
+            <p className="text-gray-600">
+              Already have an account?{" "}
+              <Link href="/auth/signin" className="text-secondary-600 font-semibold hover:text-secondary-700 transition">
+                Sign in
+              </Link>
+            </p>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              {error}
+            </Alert>
           )}
 
-          <form onSubmit={handleSignup} className="space-y-4" suppressHydrationWarning>
-            {/* Name Input */}
+          {/* Form */}
+          <form onSubmit={handleSignup} className="space-y-5">
+            {/* Full Name Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
-              <input
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+              <Input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="John Doe"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 required
+                disabled={loading}
               />
             </div>
 
             {/* Email Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-              <input
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+              <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 required
+                disabled={loading}
               />
             </div>
 
             {/* Password Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+              <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 required
+                disabled={loading}
+              />
+              <p className="text-xs text-gray-500 mt-1">Minimum 8 characters</p>
+            </div>
+
+            {/* Confirm Password Input */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Confirm Password</label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+                disabled={loading}
               />
             </div>
 
             {/* Sign Up Button */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              className="w-full mt-8"
+              size="lg"
             >
               {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin h-4 w-4 rounded-full border-2 border-white border-t-transparent"></div>
                   Creating account...
                 </span>
               ) : (
                 "Create Account"
               )}
-            </button>
+            </Button>
           </form>
 
-          {/* Sign In Link */}
-          <p className="text-center mt-6 text-gray-600">
-            Already have an account?{" "}
-            <Link href="/auth/signin" className="text-blue-600 font-semibold hover:text-blue-700 transition">
-              Sign in
+          {/* Terms & Privacy */}
+          <p className="text-center mt-8 text-xs text-gray-500">
+            By creating an account, you agree to our{" "}
+            <Link href="#" className="text-secondary-600 hover:text-secondary-700 font-medium transition">
+              Terms of Service
+            </Link>
+            {" "}and{" "}
+            <Link href="#" className="text-secondary-600 hover:text-secondary-700 font-medium transition">
+              Privacy Policy
             </Link>
           </p>
         </div>

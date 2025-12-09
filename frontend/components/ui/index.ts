@@ -1,7 +1,7 @@
 // UI Component Library Exports
 // All components styled with design tokens from frontend/lib/colors.ts and frontend/lib/typography.ts
 
-export { Button, buttonVariants } from "./button"
+export { Button } from "./button"
 export type { ButtonProps } from "./button"
 
 export { Input } from "./input"
@@ -14,7 +14,7 @@ export type { LabelProps } from "./label-simple"
 
 export { Alert, AlertTitle, AlertDescription } from "./alert"
 
-export { Badge, badgeVariants } from "./badge"
+export { Badge } from "./badge"
 export type { BadgeProps } from "./badge"
 
 export { Checkbox } from "./checkbox"

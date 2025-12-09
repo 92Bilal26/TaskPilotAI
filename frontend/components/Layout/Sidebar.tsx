@@ -9,22 +9,33 @@ interface NavItem {
   label: string
   href: string
   icon?: string
-  badge?: number
+  badge?: number | string | null
+  active?: boolean
 }
 
 interface SidebarProps {
   items: NavItem[]
   title?: string
   onLogout?: () => void
+  collapsed?: boolean
+  onCollapsedChange?: (collapsed: boolean) => void
 }
 
 /**
  * Sidebar - Reusable sidebar navigation component
  * Displays navigation items with active state indication
  */
-export function Sidebar({ items, title = 'TaskPilotAI', onLogout }: SidebarProps) {
+export function Sidebar({ items, title = 'TaskPilotAI', onLogout, collapsed: externalCollapsed, onCollapsedChange }: SidebarProps) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const [internalCollapsed, setInternalCollapsed] = useState(false)
+  const collapsed = externalCollapsed !== undefined ? externalCollapsed : internalCollapsed
+
+  const handleCollapsedChange = (newState: boolean) => {
+    setInternalCollapsed(newState)
+    if (onCollapsedChange) {
+      onCollapsedChange(newState)
+    }
+  }
 
   return (
     <aside className={cn(
@@ -71,7 +82,7 @@ export function Sidebar({ items, title = 'TaskPilotAI', onLogout }: SidebarProps
                 {!collapsed && (
                   <>
                     <span className="flex-1 truncate">{item.label}</span>
-                    {item.badge !== undefined && item.badge > 0 && (
+                    {item.badge !== undefined && item.badge !== null && item.badge !== "" && (
                       <span className="bg-error-600 text-white text-xs px-2 py-0.5 rounded-full">
                         {item.badge}
                       </span>
@@ -89,7 +100,7 @@ export function Sidebar({ items, title = 'TaskPilotAI', onLogout }: SidebarProps
           collapsed && 'flex flex-col items-center'
         )}>
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            onClick={() => handleCollapsedChange(!collapsed)}
             className={cn(
               'w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700',
               'transition-colors duration-fast'

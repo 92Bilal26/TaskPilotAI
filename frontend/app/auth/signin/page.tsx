@@ -1,8 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { apiClient } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Alert } from "@/components/ui/alert";
 
 export default function SigninPage() {
   const router = useRouter();
@@ -10,6 +13,12 @@ export default function SigninPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSignin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,85 +36,142 @@ export default function SigninPage() {
     setLoading(false);
   };
 
+  if (!isMounted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
+        <div className="animate-spin h-12 w-12 rounded-full border-4 border-primary-200 border-t-primary-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl mb-4">
-            <span className="text-white text-xl font-bold">✓</span>
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex">
+      {/* Left Side - Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 flex-col justify-between p-12 relative overflow-hidden">
+        {/* Decorative Elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-white/5 rounded-full -ml-36 -mb-36"></div>
+
+        {/* Branding Content */}
+        <div className="relative z-10">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-white/20 backdrop-blur-md rounded-2xl mb-8 border border-white/30 hover:bg-white/30 transition">
+            <span className="text-white text-2xl font-bold">✓</span>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-          <p className="text-gray-500">Sign in to manage your tasks</p>
+          <h1 className="text-5xl font-bold text-white mb-4 leading-tight">
+            Welcome Back to TaskPilotAI
+          </h1>
+          <p className="text-lg text-white/80 max-w-md">
+            Stay focused, get things done. Manage your tasks with intelligent insights and seamless organization.
+          </p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-700 text-sm font-medium">{error}</p>
+        {/* Features List */}
+        <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <span>📋</span>
             </div>
+            <span className="text-white/90">Organize tasks effortlessly</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <span>🎯</span>
+            </div>
+            <span className="text-white/90">Track progress in real-time</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <span>⚡</span>
+            </div>
+            <span className="text-white/90">Boost your productivity</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Side - Sign In Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-12 sm:px-8 md:px-12">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="mb-8 sm:mb-10">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Sign In</h2>
+            <p className="text-gray-600">
+              Don't have an account?{" "}
+              <Link href="/auth/signup" className="text-primary-600 font-semibold hover:text-primary-700 transition">
+                Create one
+              </Link>
+            </p>
+          </div>
+
+          {/* Error Alert */}
+          {error && (
+            <Alert variant="destructive" className="mb-6">
+              {error}
+            </Alert>
           )}
 
-          <form onSubmit={handleSignin} className="space-y-4" suppressHydrationWarning>
+          {/* Form */}
+          <form onSubmit={handleSignin} className="space-y-5">
             {/* Email Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-              <input
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+              <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 required
+                disabled={loading}
               />
             </div>
 
             {/* Password Input */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-semibold text-gray-700">Password</label>
+                <Link href="#" className="text-xs text-primary-600 hover:text-primary-700 font-medium transition">
+                  Forgot?
+                </Link>
+              </div>
+              <Input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 required
+                disabled={loading}
               />
             </div>
 
             {/* Sign In Button */}
-            <button
+            <Button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed mt-6"
+              className="w-full mt-8"
+              size="lg"
             >
               {loading ? (
-                <span className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                <span className="flex items-center justify-center gap-2">
+                  <div className="animate-spin h-4 w-4 rounded-full border-2 border-white border-t-transparent"></div>
                   Signing in...
                 </span>
               ) : (
                 "Sign In"
               )}
-            </button>
+            </Button>
           </form>
 
           {/* Demo Credentials */}
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-xs font-medium text-blue-900 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-blue-700">Email: demo@example.com</p>
-            <p className="text-xs text-blue-700">Password: demo123</p>
+          <div className="mt-8 p-4 bg-primary-50 border border-primary-200 rounded-xl">
+            <p className="text-xs font-semibold text-primary-900 mb-2">Demo Credentials:</p>
+            <p className="text-xs text-primary-700">Email: demo@example.com</p>
+            <p className="text-xs text-primary-700">Password: demo123</p>
           </div>
 
-          {/* Sign Up Link */}
-          <p className="text-center mt-6 text-gray-600">
-            Don't have an account?{" "}
-            <Link href="/auth/signup" className="text-blue-600 font-semibold hover:text-blue-700 transition">
-              Sign up
+          {/* Footer */}
+          <p className="text-center mt-8 text-sm text-gray-500">
+            By signing in, you agree to our{" "}
+            <Link href="#" className="text-primary-600 hover:text-primary-700 font-medium transition">
+              Terms of Service
             </Link>
           </p>
         </div>
