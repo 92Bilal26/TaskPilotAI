@@ -370,7 +370,7 @@
 
   /* Input Base */
   .input {
-    @apply w-full px-4 py-2.5 rounded-lg border-2 border-gray-300 bg-white text-gray-900 font-base transition-all duration-fast;
+    @apply w-full px-4 py-2.5 rounded-lg border-2 border-gray-300 bg-white text-gray-900 text-sm transition-all duration-fast;
   }
 
   .input:focus {
