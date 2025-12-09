@@ -3,7 +3,7 @@ from pydantic_settings import BaseSettings
 from typing import List
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = "postgresql://user:password@localhost:5432/taskpilot"
+    DATABASE_URL: str = "postgresql://taskpilot:taskpilot_password@localhost:5432/taskpilot"
     JWT_SECRET: str = "your-secret-key"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRY_SECONDS: int = 604800

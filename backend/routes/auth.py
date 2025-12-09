@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlmodel import Session, select
 from pydantic import BaseModel, EmailStr
-from passlib.context import CryptContext
+from bcrypt import hashpw, gensalt, checkpw
 from datetime import datetime, timedelta
 from jose import jwt
 from config import settings
@@ -10,7 +10,6 @@ from db import get_session
 from models import User
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class SignupRequest(BaseModel):
     email: EmailStr
@@ -31,12 +30,26 @@ def create_token(user_id: str, expires_in: int = settings.JWT_EXPIRY_SECONDS) ->
     to_encode = {"user_id": user_id, "exp": expire}
     return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
 
+def hash_password(password: str) -> str:
+    """Hash password using bcrypt"""
+    return hashpw(password.encode('utf-8'), gensalt()).decode('utf-8')
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify password against hash"""
+    return checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+
 @router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def signup(request: SignupRequest, session: Session = Depends(get_session)):
     statement = select(User).where(User.email == request.email)
     if session.exec(statement).first():
         raise HTTPException(status_code=409, detail="Email already registered")
+
+    # Hash the password before storing
+    hashed_password = hash_password(request.password)
+
     user = User(email=request.email, name=request.name, emailVerified=True)
+    # Store hashed password in the database
+    user.password_hash = hashed_password
     session.add(user)
     session.commit()
     session.refresh(user)
@@ -50,7 +63,7 @@ async def signup(request: SignupRequest, session: Session = Depends(get_session)
 async def signin(request: SigninRequest, session: Session = Depends(get_session)):
     statement = select(User).where(User.email == request.email)
     user = session.exec(statement).first()
-    if not user:
+    if not user or not hasattr(user, 'password_hash') or not verify_password(request.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     return {
         "access_token": create_token(user.id),

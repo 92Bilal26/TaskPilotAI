@@ -162,16 +162,14 @@ export default function DashboardPage() {
               {tasks.map((task) => (
                 <div
                   key={task.id}
-                  className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition hover:shadow-md ${
-                    task.completed ? "opacity-75" : ""
-                  }`}
+                  className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 transition hover:shadow-md ${task.completed ? "opacity-75" : ""
+                    }`}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <h3
-                        className={`text-lg font-semibold ${
-                          task.completed ? "line-through text-gray-400" : "text-gray-900"
-                        }`}
+                        className={`text-lg font-semibold ${task.completed ? "line-through text-gray-400" : "text-gray-900"
+                          }`}
                       >
                         {task.title}
                       </h3>
@@ -184,11 +182,10 @@ export default function DashboardPage() {
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleToggle(task.id)}
-                        className={`px-4 py-2 rounded-lg font-medium transition ${
-                          task.completed
+                        className={`px-4 py-2 rounded-lg font-medium transition ${task.completed
                             ? "bg-green-100 text-green-700 hover:bg-green-200"
                             : "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                        }`}
+                          }`}
                       >
                         {task.completed ? "✓ Done" : "⏳ Pending"}
                       </button>

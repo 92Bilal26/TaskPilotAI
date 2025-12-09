@@ -2,8 +2,13 @@
 import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api";
 
+interface AnalyticsData {
+  total_tasks: number;
+  completion_rate: number;
+}
+
 export default function Analytics() {
-  const [analytics, setAnalytics] = useState(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
 
   useEffect(() => {
     fetchAnalytics();
@@ -12,7 +17,7 @@ export default function Analytics() {
   const fetchAnalytics = async () => {
     const result = await apiClient.get("/advanced/analytics");
     if (result.success) {
-      setAnalytics(result.data);
+      setAnalytics(result.data as AnalyticsData);
     }
   };
 

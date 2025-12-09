@@ -19,8 +19,9 @@ export default function SigninPage() {
     if (!result.success) {
       setError(result.error || "Signin failed");
     } else {
-      localStorage.setItem("auth_token", result.data.access_token);
-      localStorage.setItem("refresh_token", result.data.refresh_token);
+      const data = result.data as { access_token: string; refresh_token: string };
+      localStorage.setItem("auth_token", data.access_token);
+      localStorage.setItem("refresh_token", data.refresh_token);
       router.push("/dashboard");
     }
     setLoading(false);
