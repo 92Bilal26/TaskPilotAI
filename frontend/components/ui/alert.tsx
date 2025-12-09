@@ -16,7 +16,7 @@ const getAlertClasses = (variant: string) => {
 
 const Alert = React.forwardRef<HTMLDivElement, AlertProps>(
   ({ className = "", variant = "default", ...props }, ref) => {
-    const baseClasses = "relative w-full rounded-lg border p-4"
+    const baseClasses = "relative w-full rounded-lg border p-4 animate-slide-in-down"
     const variantClasses = getAlertClasses(variant)
     const finalClassName = `${baseClasses} ${variantClasses} ${className}`
 

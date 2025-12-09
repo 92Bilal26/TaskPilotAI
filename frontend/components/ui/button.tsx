@@ -7,12 +7,12 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 
 const getVariantClasses = (variant: string) => {
   const variants: Record<string, string> = {
-    default: "bg-primary-600 text-white hover:bg-primary-700 active:scale-95",
-    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 active:scale-95",
-    destructive: "bg-error-50 text-error-600 hover:bg-error-100 active:scale-95",
-    outline: "border-2 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 active:scale-95",
-    ghost: "bg-transparent text-primary-600 hover:bg-primary-50 active:scale-95",
-    link: "text-primary-600 underline-offset-4 hover:underline",
+    default: "bg-primary-600 text-white hover:bg-primary-700 hover:shadow-lg active:scale-95 transition-all duration-fast",
+    secondary: "bg-gray-100 text-gray-900 hover:bg-gray-200 hover:shadow-md active:scale-95 transition-all duration-fast",
+    destructive: "bg-error-50 text-error-600 hover:bg-error-100 hover:shadow-md active:scale-95 transition-all duration-fast",
+    outline: "border-2 border-gray-300 bg-white text-gray-900 hover:bg-gray-50 hover:shadow-sm active:scale-95 transition-all duration-fast",
+    ghost: "bg-transparent text-primary-600 hover:bg-primary-50 active:scale-95 transition-all duration-fast",
+    link: "text-primary-600 underline-offset-4 hover:underline transition-colors duration-fast",
   }
   return variants[variant] || variants.default
 }

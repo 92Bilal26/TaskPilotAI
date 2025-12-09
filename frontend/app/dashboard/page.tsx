@@ -96,7 +96,7 @@ export default function DashboardPage() {
 
   if (!isMounted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-white flex items-center justify-center animate-fade-in">
         <div className="animate-spin h-12 w-12 rounded-full border-4 border-primary-200 border-t-primary-600"></div>
       </div>
     );

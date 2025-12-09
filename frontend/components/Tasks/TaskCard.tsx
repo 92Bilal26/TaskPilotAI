@@ -29,7 +29,7 @@ export function TaskCard({
 
   return (
     <Card className={cn(
-      'transition-all duration-normal hover:shadow-md',
+      'transition-all duration-normal hover:shadow-lg animate-slide-in-up',
       task.completed && 'opacity-75'
     )}>
       <CardHeader className="pb-3">
