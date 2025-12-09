@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -40,12 +40,15 @@ export function Sidebar({ items, title = 'TaskPilotAI', onLogout, collapsed: ext
   return (
     <aside className={cn(
       'border-r border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 transition-all duration-normal',
-      collapsed ? 'w-20' : 'w-64'
+      'fixed md:relative bottom-0 left-0 right-0 md:bottom-auto md:left-auto md:right-auto z-40',
+      'h-20 md:h-screen flex flex-row-reverse md:flex-col',
+      collapsed ? 'md:w-20' : 'md:w-64',
+      'w-full'
     )}>
-      <div className="flex flex-col h-screen">
-        {/* Logo */}
+      <div className="flex flex-col md:h-screen h-full w-full md:w-auto">
+        {/* Logo - Hidden on Mobile */}
         <div className={cn(
-          'flex items-center gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-700',
+          'hidden md:flex items-center gap-3 px-6 py-4 border-b border-gray-200 dark:border-gray-700',
           collapsed && 'justify-center px-2'
         )}>
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-600 to-primary-700 flex items-center justify-center text-white font-bold">
@@ -62,7 +65,7 @@ export function Sidebar({ items, title = 'TaskPilotAI', onLogout, collapsed: ext
         </div>
 
         {/* Navigation Items */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-2">
+        <nav className="flex-1 overflow-x-auto md:overflow-y-auto px-2 md:px-3 py-2 md:py-4 space-x-1 md:space-x-0 md:space-y-2 flex md:flex-col">
           {items.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
 
@@ -71,23 +74,24 @@ export function Sidebar({ items, title = 'TaskPilotAI', onLogout, collapsed: ext
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-fast',
+                  'flex items-center gap-3 px-2 md:px-3 py-2 md:py-2.5 rounded-lg text-sm font-medium transition-colors duration-fast whitespace-nowrap md:whitespace-normal flex-shrink-0 md:flex-shrink',
+                  'h-10 md:h-auto',
                   isActive
                     ? 'bg-primary-100 text-primary-700 dark:bg-primary-900 dark:text-primary-200'
                     : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
                 )}
-                title={collapsed ? item.label : undefined}
+                title={item.label}
               >
                 {item.icon && <span className="text-lg">{item.icon}</span>}
                 {!collapsed && (
-                  <>
+                  <div className="hidden md:flex md:flex-1 md:items-center md:gap-2">
                     <span className="flex-1 truncate">{item.label}</span>
                     {item.badge !== undefined && item.badge !== null && item.badge !== "" && (
                       <span className="bg-error-600 text-white text-xs px-2 py-0.5 rounded-full">
                         {item.badge}
                       </span>
                     )}
-                  </>
+                  </div>
                 )}
               </Link>
             )

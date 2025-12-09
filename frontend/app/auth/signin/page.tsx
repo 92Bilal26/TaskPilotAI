@@ -45,8 +45,8 @@ export default function SigninPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex">
-      {/* Left Side - Branding */}
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex flex-col lg:flex-row">
+      {/* Left Side - Branding (Hidden on Mobile) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 via-primary-700 to-secondary-600 flex-col justify-between p-12 relative overflow-hidden">
         {/* Decorative Elements */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -mr-48 -mt-48"></div>
@@ -89,8 +89,8 @@ export default function SigninPage() {
       </div>
 
       {/* Right Side - Sign In Form */}
-      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-6 py-12 sm:px-8 md:px-12">
-        <div className="w-full max-w-md">
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center px-4 py-8 sm:px-6 sm:py-12 md:px-8">
+        <div className="w-full max-w-sm sm:max-w-md">
           {/* Header */}
           <div className="mb-8 sm:mb-10">
             <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Sign In</h2>

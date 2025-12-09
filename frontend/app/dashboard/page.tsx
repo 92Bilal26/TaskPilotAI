@@ -112,7 +112,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex flex-col md:flex-row pb-20 md:pb-0">
       {/* Sidebar */}
       <Sidebar
         items={sidebarItems}
@@ -137,9 +137,9 @@ export default function DashboardPage() {
 
         {/* Content Area */}
         <div className="flex-1 overflow-auto">
-          <div className="p-6 md:p-8 max-w-7xl mx-auto w-full">
+          <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
@@ -184,7 +184,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Create Task Card */}
-            <Card className="mb-8">
+            <Card className="mb-6 sm:mb-8">
               <CardHeader>
                 <CardTitle>Create New Task</CardTitle>
               </CardHeader>
@@ -225,14 +225,14 @@ export default function DashboardPage() {
             </Card>
 
             {/* Filter & Search */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <div className="flex-1">
+            <div className="flex flex-col gap-3 sm:gap-4 mb-6">
+              <div className="w-full">
                 <SearchBar
                   placeholder="Search tasks..."
                   onSearch={(query) => setSearchQuery(query)}
                 />
               </div>
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap justify-start sm:justify-between">
                 <Badge
                   variant={filterStatus === "all" ? "default" : "outline"}
                   className="cursor-pointer"
