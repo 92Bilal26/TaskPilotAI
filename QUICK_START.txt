@@ -1,0 +1,101 @@
+================================================================================
+                   TASKPILOTAI - QUICK START GUIDE
+================================================================================
+
+READY TO RUN? Follow these 3 simple steps:
+
+STEP 1: Activate Virtual Environment (Python 3.13)
+─────────────────────────────────────────────────────
+  $ cd /home/bilal/TaskPilotAI
+  $ source .venv/bin/activate
+
+STEP 2: Start Backend (FastAPI) - Terminal 1
+──────────────────────────────────────────────
+  $ cd backend
+  $ uvicorn main:app --reload
+
+  ✅ Backend running at: http://localhost:8000
+  📚 API Docs at:        http://localhost:8000/docs
+
+STEP 3: Start Frontend (Next.js) - Terminal 2
+───────────────────────────────────────────────
+  $ cd /home/bilal/TaskPilotAI/frontend
+  $ npm run dev
+
+  ✅ Frontend running at: http://localhost:3000
+
+================================================================================
+
+                            VERIFY IT'S WORKING
+
+✓ Frontend: http://localhost:3000
+✓ Backend: http://localhost:8000
+✓ API Docs: http://localhost:8000/docs
+✓ Health Check: curl http://localhost:8000/health
+
+================================================================================
+
+                         ENVIRONMENT INFORMATION
+
+Python Version:   3.13.10
+Node.js Version:  v22.21.0
+npm Version:      v10.9.4
+Database:         SQLite (local/taskpilot.db)
+Framework:        FastAPI + Next.js
+
+================================================================================
+
+                            USEFUL COMMANDS
+
+Backend Tests:
+  $ source .venv/bin/activate
+  $ cd backend
+  $ pytest -v
+
+Backend Type Checking:
+  $ mypy .
+
+Code Style Check:
+  $ flake8 .
+
+Frontend Tests:
+  $ cd frontend
+  $ npm run test
+
+Frontend Build:
+  $ npm run build
+
+================================================================================
+
+                         TROUBLESHOOTING
+
+Port 8000 Already in Use?
+  $ uvicorn main:app --port 8001
+
+Port 3000 Already in Use?
+  $ PORT=3001 npm run dev
+
+Backend Not Starting?
+  $ python --version  # Should show 3.13.x
+  $ pip install -r backend/requirements.txt
+
+Frontend Not Starting?
+  $ cd frontend
+  $ rm -rf node_modules
+  $ npm install
+
+================================================================================
+
+                         DOCUMENTATION
+
+Full Setup Guide:  LOCAL_SETUP.md
+Setup Summary:     SETUP_COMPLETE.md
+This Quick Guide:  QUICK_START.txt
+
+================================================================================
+
+                       YOU'RE ALL SET! 🚀
+
+Open http://localhost:3000 in your browser after starting both servers.
+
+================================================================================

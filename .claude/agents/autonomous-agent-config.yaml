@@ -1,0 +1,249 @@
+# Autonomous Agent Configuration
+# This file configures the agent that works autonomously with Claude Code
+
+agent:
+  name: "TaskPilotAI Autonomous Agent"
+  version: "1.0.0"
+  mode: "autonomous"
+  description: "Autonomous agent that auto-selects options and continues implementation without user input"
+
+# Agent Decision-Making Rules
+decision_rules:
+
+  # Rule 1: Technology Stack Selection
+  - id: "rule_tech_stack"
+    trigger: "Claude asks about technology choice"
+    options_preference:
+      - "Use specified in spec (highest priority)"
+      - "Next.js for frontend (if not specified)"
+      - "FastAPI for backend (if not specified)"
+      - "PostgreSQL for database (if not specified)"
+      - "TypeScript for frontend code (if not specified)"
+      - "Python for backend code (if not specified)"
+    auto_select: true
+
+  # Rule 2: Feature Scope Selection
+  - id: "rule_feature_scope"
+    trigger: "Claude asks about MVP vs Full scope"
+    options_preference:
+      - "Full feature scope (complete user story)"
+      - "MVP scope (basic functionality)"
+      - "Core operations only"
+    auto_select: true
+    reasoning: "Complete features reduce rework"
+
+  # Rule 3: Testing Approach
+  - id: "rule_testing"
+    trigger: "Claude asks about testing strategy"
+    options_preference:
+      - "Test-First (Red-Green-Refactor) per constitution"
+      - "Write tests after implementation"
+      - "Skip tests for now"
+    auto_select: true
+    reasoning: "Constitutional requirement: ≥95% coverage"
+
+  # Rule 4: Code Organization
+  - id: "rule_organization"
+    trigger: "Claude asks about folder structure"
+    options_preference:
+      - "Follow project structure from phase-2-plan.md"
+      - "Monorepo structure (frontend + backend)"
+      - "Single folder structure"
+    auto_select: true
+    reasoning: "Consistency with specification"
+
+  # Rule 5: Deployment Target
+  - id: "rule_deployment"
+    trigger: "Claude asks about deployment"
+    options_preference:
+      - "Local development first"
+      - "Vercel for frontend"
+      - "Railway/Heroku for backend"
+    auto_select: true
+
+  # Rule 6: Error Handling Strategy
+  - id: "rule_error_handling"
+    trigger: "Claude asks about error handling"
+    options_preference:
+      - "Comprehensive (handle all error paths)"
+      - "Basic error handling"
+      - "Minimal error handling"
+    auto_select: true
+    reasoning: "API robustness requirement"
+
+  # Rule 7: Database Approach
+  - id: "rule_database"
+    trigger: "Claude asks about database strategy"
+    options_preference:
+      - "Persistent PostgreSQL (per spec)"
+      - "In-memory for testing"
+      - "File-based storage"
+    auto_select: true
+
+  # Rule 8: Authentication Method
+  - id: "rule_auth"
+    trigger: "Claude asks about authentication"
+    options_preference:
+      - "JWT tokens with Better Auth (per spec)"
+      - "Session-based auth"
+      - "API key auth"
+    auto_select: true
+
+  # Rule 9: API Design
+  - id: "rule_api_design"
+    trigger: "Claude asks about API structure"
+    options_preference:
+      - "RESTful with 6 endpoints (per spec)"
+      - "Simplified endpoints"
+      - "GraphQL approach"
+    auto_select: true
+
+  # Rule 10: UI Framework
+  - id: "rule_ui_framework"
+    trigger: "Claude asks about UI library"
+    options_preference:
+      - "Next.js 16+ with React (per spec)"
+      - "Vanilla React"
+      - "Other framework"
+    auto_select: true
+
+# Agent Next-Step Decision Logic
+next_step_rules:
+
+  - id: "after_setup"
+    current_phase: "Setup complete"
+    next_options:
+      - "Move to Phase 2: Foundational (recommended)"
+      - "Continue with Phase 1 setup variations"
+      - "Jump to implementation"
+    auto_select_preference: 0  # Select first option (index 0)
+    reasoning: "Sequential phases reduce rework"
+
+  - id: "after_foundational"
+    current_phase: "Foundational complete"
+    next_options:
+      - "Start Phase 3: Authentication (US1) (recommended)"
+      - "Start Phase 4: CRUD (US2)"
+      - "Jump to integration"
+    auto_select_preference: 0
+    reasoning: "Auth must be before CRUD"
+
+  - id: "after_auth"
+    current_phase: "Authentication complete"
+    next_options:
+      - "Start Phase 4: Task CRUD (US2) (recommended)"
+      - "Start Phase 5: Filtering (US3)"
+      - "Jump to integration"
+    auto_select_preference: 0
+    reasoning: "CRUD depends on auth"
+
+  - id: "after_crud"
+    current_phase: "Task CRUD complete"
+    next_options:
+      - "Start Phase 5: Filtering & Completion (US3) (recommended)"
+      - "Jump to Phase 6: Integration"
+      - "Start Phase 7: Polish"
+    auto_select_preference: 0
+    reasoning: "Filtering builds on CRUD"
+
+  - id: "after_filtering"
+    current_phase: "Filtering complete"
+    next_options:
+      - "Start Phase 6: Integration & Deployment (recommended)"
+      - "Jump to Phase 7: Polish"
+      - "Review and test"
+    auto_select_preference: 0
+    reasoning: "Integration ensures everything works together"
+
+  - id: "after_integration"
+    current_phase: "Integration complete"
+    next_options:
+      - "Start Phase 7: Polish & Testing (recommended)"
+      - "Deploy to production"
+      - "Fix any issues first"
+    auto_select_preference: 0
+    reasoning: "Testing ensures quality"
+
+  - id: "after_polish"
+    current_phase: "Polish complete"
+    next_options:
+      - "Deploy to Vercel (frontend)"
+      - "Deploy backend to server"
+      - "Run final verification"
+      - "Ready for Phase 3 (Chatbot)"
+    auto_select_preference: 0
+    reasoning: "Complete Phase 2 requirements"
+
+# Code Quality Requirements (Auto-enforce)
+quality_enforcement:
+  - check_type_errors: true       # mypy for Python, TypeScript for TS
+    auto_fix_minor: true
+    block_on_major_error: true
+
+  - check_linting: true           # flake8 for Python, ESLint for TS
+    auto_fix_formatting: true
+    block_on_violations: true
+
+  - check_test_coverage: true     # ≥95% backend, ≥90% frontend
+    minimum_backend: 95
+    minimum_frontend: 90
+    block_on_low_coverage: true
+
+  - check_user_isolation: true    # Verify data isolation at 3 levels
+    database_level: true
+    api_level: true
+    frontend_level: true
+    block_on_violation: true
+
+# Auto-commit Strategy
+git_workflow:
+  auto_commit: true
+  commit_frequency: "after_phase"  # Commit after each phase completes
+  commit_message_format: "Phase X: [Feature] - [Description]\n\n[Details]\n\n🤖 Generated with Autonomous Agent"
+  branch: "phase-2-auto"
+  auto_push: false  # Manual push only
+
+# Skills Configuration
+skills:
+  enabled: true
+  available_skills:
+    - "code_generation"      # Generate code from specs
+    - "test_generation"      # Generate tests
+    - "documentation"        # Generate docs
+    - "git_operations"       # Git commits and pushes
+    - "code_review"          # Review for quality
+    - "deployment"           # Deploy to Vercel/servers
+    - "debugging"            # Fix errors
+    - "refactoring"          # Improve code quality
+
+# Logging and Monitoring
+logging:
+  level: "INFO"
+  log_decisions: true
+  log_option_selections: true
+  log_phase_transitions: true
+  log_errors: true
+  log_file: "/home/bilal/TaskPilotAI/.claude/agents/agent-execution.log"
+
+# Timeout and Limits
+execution:
+  max_consecutive_tasks: 50      # Stop after 50 consecutive tasks (safety)
+  task_timeout_minutes: 30        # Timeout per task
+  phase_timeout_hours: 4          # Timeout per phase
+  auto_recovery: true             # Recover from errors
+  max_retries: 3                  # Retry failed tasks 3 times
+
+# Notification Settings
+notifications:
+  notify_on_phase_complete: true
+  notify_on_error: true
+  notify_on_decision: false       # Don't spam notifications for each decision
+  notify_on_git_commit: true
+
+# Safety Boundaries
+safety:
+  prevent_data_loss: true         # Never delete code without backup
+  prevent_secret_exposure: true   # Check for hardcoded secrets
+  prevent_breaking_changes: true  # Verify no feature regressions
+  require_test_pass: true         # Don't commit if tests fail
+  require_type_check: true        # Don't commit if type errors exist

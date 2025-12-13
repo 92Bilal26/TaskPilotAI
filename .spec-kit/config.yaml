@@ -1,0 +1,104 @@
+# Spec-Kit Configuration for TaskPilotAI - Phase 2
+# Monorepo structure for full-stack application
+
+name: TaskPilotAI
+version: "2.0"
+phase: Phase II
+
+structure:
+  specs_dir: specs
+  features_dir: specs/features
+  api_dir: specs/api
+  database_dir: specs/database
+  ui_dir: specs/ui
+
+phases:
+  - name: phase1-console
+    description: "In-Memory Python Console App"
+    features: [add-task, delete-task, update-task, view-tasks, mark-complete]
+
+  - name: phase2-web
+    description: "Full-Stack Web Application"
+    features: [task-crud, authentication, api-endpoints, database-schema]
+
+  - name: phase3-chatbot
+    description: "AI-Powered Todo Chatbot"
+    features: [task-crud, authentication, chatbot, mcp-tools]
+
+  - name: phase4-kubernetes
+    description: "Local Kubernetes Deployment"
+    features: [task-crud, authentication, chatbot, docker, kubernetes]
+
+  - name: phase5-cloud
+    description: "Advanced Cloud Deployment"
+    features: [task-crud, authentication, chatbot, kafka, dapr, cloud-deployment]
+
+features:
+  - name: task-crud
+    path: specs/features/task-crud.md
+    description: "Create, Read, Update, Delete tasks with multi-user support"
+
+  - name: authentication
+    path: specs/features/authentication.md
+    description: "User signup/signin with JWT token validation"
+
+  - name: api-endpoints
+    path: specs/api/rest-endpoints.md
+    description: "RESTful API endpoints for task management"
+
+  - name: database-schema
+    path: specs/database/schema.md
+    description: "PostgreSQL schema with users and tasks tables"
+
+stack:
+  frontend:
+    framework: Next.js 16+
+    language: TypeScript
+    styling: Tailwind CSS
+    auth: Better Auth
+
+  backend:
+    framework: FastAPI
+    language: Python 3.13+
+    orm: SQLModel
+    database: Neon PostgreSQL
+
+  infrastructure:
+    frontend-hosting: Vercel
+    backend: FastAPI server
+    database: Neon Serverless PostgreSQL
+    auth-provider: Better Auth
+
+conventions:
+  - "All specs must follow Markdown format"
+  - "API responses use consistent JSON structure"
+  - "Timestamps use ISO 8601 UTC format (YYYY-MM-DDTHH:MM:SSZ)"
+  - "Database queries filter by authenticated user_id"
+  - "All frontend API calls include Authorization Bearer token"
+  - "Error responses include status, message, and error code"
+  - "HTTP status codes follow REST conventions"
+
+quality-gates:
+  - description: "All API endpoints implemented"
+    status: "pending"
+
+  - description: "Frontend and backend integrated with JWT auth"
+    status: "pending"
+
+  - description: "Database schema created with proper constraints"
+    status: "pending"
+
+  - description: "User isolation enforced (task access control)"
+    status: "pending"
+
+  - description: "Comprehensive test coverage (unit + integration)"
+    status: "pending"
+
+  - description: "Error handling for all edge cases"
+    status: "pending"
+
+  - description: "Frontend deployed to Vercel"
+    status: "pending"
+
+  - description: "Backend running and accessible"
+    status: "pending"
