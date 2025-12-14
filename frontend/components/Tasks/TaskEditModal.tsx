@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Task } from '@/types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,8 +15,16 @@ interface TaskEditModalProps {
 }
 
 export function TaskEditModal({ task, onClose, onSave, isLoading = false }: TaskEditModalProps) {
-  const [title, setTitle] = useState(task?.title || '')
-  const [description, setDescription] = useState(task?.description || '')
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+
+  // Update form values when task changes
+  useEffect(() => {
+    if (task) {
+      setTitle(task.title || '')
+      setDescription(task.description || '')
+    }
+  }, [task])
   const [isSaving, setIsSaving] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {

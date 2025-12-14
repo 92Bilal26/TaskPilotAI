@@ -1,4 +1,5 @@
 // API client with automatic JWT token attachment
+import { getApiUrl, config } from './config';
 
 export interface Task {
   id: string;
@@ -34,8 +35,15 @@ export interface ApiResponse<T = any> {
 export class ApiClient {
   private baseUrl: string;
 
-  constructor(baseUrl: string = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000") {
-    this.baseUrl = baseUrl;
+  constructor(baseUrl?: string) {
+    // Use provided baseUrl or get from centralized config
+    this.baseUrl = baseUrl || getApiUrl();
+
+    // Log API URL in development for debugging
+    if (config.features.enableDebugLogging && typeof window !== 'undefined') {
+      console.log('[API Client] Initialized with URL:', this.baseUrl);
+      console.log('[API Client] Environment:', config.app.environment);
+    }
   }
 
   private getToken(): string | null {
@@ -79,7 +87,12 @@ export class ApiClient {
         headers,
       });
 
-      const data = await response.json();
+      // Handle 204 No Content (e.g., DELETE operations)
+      let data: any = null;
+      if (response.status !== 204) {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : null;
+      }
 
       if (!response.ok) {
         if (response.status === 401) {
