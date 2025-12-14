@@ -1016,8 +1016,455 @@ Every Phase 2 commit is checked:
 
 ---
 
-**Version**: 2.0.0
-**Ratified**: 2025-12-07
-**Last Amended**: 2025-12-07
-**Status**: Active for Phase 1 & Phase 2
-**Next Review**: Post Phase 2 Completion
+---
+
+# TaskPilotAI - Phase 3 Constitution
+
+**The Evolution of Todo: AI-Powered Chatbot**
+
+Hackathon II - Phase 3 (Due: Dec 21, 2025) - 200 Points
+
+A spec-driven, test-first implementation of an AI-powered conversational interface for managing todos using OpenAI Agents SDK, Official MCP SDK, OpenAI ChatKit UI, and stateless backend design with Claude Code and Spec-Kit Plus.
+
+---
+
+## Phase 3 Overview
+
+| Aspect | Details |
+|---|---|
+| **Phase Name** | Phase III: Todo AI Chatbot |
+| **Objective** | Create conversational interface for managing todos through natural language using MCP tools, Agents SDK, and ChatKit UI |
+| **Due Date** | Sunday, Dec 21, 2025 |
+| **Points** | 200 |
+| **Key Constraints** | Spec-driven development; MCP-first architecture; stateless server; ChatKit integration; Agents SDK for orchestration |
+| **Builds On** | Phase 2 (multi-user, persistent database, JWT auth) |
+
+---
+
+## Phase 3 Core Principles (Extends Phase 1 & Phase 2)
+
+### I. Spec-Driven Development (Maintained from Phase 1 & 2)
+Every feature must be defined in detailed Markdown specifications covering all requirements before any code is written.
+
+### II. Test-First Development (Maintained from Phase 1 & 2)
+- Strict TDD: Red → Green → Refactor
+- ≥95% backend code coverage required
+- ≥90% frontend code coverage required
+
+### III. OpenAI ChatKit Integration (NEW - Phase 3)
+**ChatKit is a framework-agnostic, drop-in chat UI solution** that provides pre-built chat widgets, streaming support, tool visualization, and responsive design.
+
+**Installation & Setup:**
+```bash
+npm install @openai/chatkit-react
+# Add script tag: https://cdn.platform.openai.com/deployments/chatkit/chatkit.js
+```
+
+**Domain Configuration (Production):**
+1. Deploy frontend to get production URL (Vercel: https://your-app.vercel.app)
+2. Register domain at: https://platform.openai.com/settings/organization/security/domain-allowlist
+3. Get domain key from OpenAI
+4. Pass domainKey to ChatKit configuration
+
+**Local Development (No domain config needed):**
+- ChatKit works with localhost without domain registration
+- Useful for testing before production
+
+**Rules:**
+- ❌ Cannot skip ChatKit integration (it's a requirement)
+- ❌ Cannot build custom chat UI if ChatKit available
+- ❌ Cannot hardcode OpenAI API keys in frontend
+- ✅ Use ChatKit React bindings (@openai/chatkit-react)
+- ✅ Generate client secret server-side
+- ✅ Configure domain allowlist for production
+
+**Reference Documentation:** See `/docs/REFERENCE-OPENAI-CHATKIT.md`
+
+### IV. OpenAI Agents SDK Integration (NEW - Phase 3)
+**Agents SDK is a lightweight framework for multi-agent workflows** that enables autonomous tool selection, multi-tool execution, and conversation context management.
+
+**Installation:**
+```bash
+pip install openai[agents]
+```
+
+**Core Primitives:**
+- **Agents**: LLMs with instructions and tools
+- **Handoffs**: Delegate to specialized agents
+- **Guardrails**: Validate inputs/outputs
+- **Sessions**: Maintain conversation history
+
+**Rules:**
+- ❌ Cannot use basic completion API (must use Agents)
+- ❌ Cannot hardcode tool invocation logic
+- ✅ Agent autonomously selects tools
+- ✅ Agent chains tools for complex operations
+- ✅ Agent handles errors gracefully
+
+**Reference Documentation:** See `/docs/REFERENCE-OPENAI-AGENTS-SDK.md`
+
+### V. Official MCP SDK (NEW - Phase 3)
+**Model Context Protocol (MCP) is an open standard** for integrating LLM applications with external tools and resources. Donated to Linux Foundation in Dec 2025.
+
+**Installation:**
+```bash
+pip install mcp
+```
+
+**Why MCP?**
+- Standardized tool interface
+- Vendor-neutral (works with any LLM)
+- Official Python SDK from modelcontextprotocol.io
+- Enterprise-grade tooling
+
+**Rules:**
+- ❌ Cannot expose database directly to frontend
+- ❌ Cannot implement task operations without MCP tool
+- ✅ All 5 tasks ops via MCP tools
+- ✅ Tools validate user_id ownership
+- ✅ Tools stateless (database holds state)
+
+**Reference Documentation:** See `/docs/REFERENCE-MCP-PROTOCOL.md`
+
+### VI. MCP-First Architecture (NEW - Phase 3)
+All business logic exposed as MCP tools that Agents SDK invokes.
+
+**5 Required MCP Tools:**
+1. **add_task** - Create task
+2. **list_tasks** - Retrieve tasks
+3. **complete_task** - Toggle completion
+4. **delete_task** - Remove task
+5. **update_task** - Modify task
+
+### VII. Stateless Chat Endpoint (NEW - Phase 3)
+Server holds zero state. All state in database.
+
+**Conversation Flow:**
+1. Receive user message + conversation_id (optional)
+2. Fetch conversation history from database
+3. Build message array for agent
+4. Store user message in database
+5. Run agent with MCP tools
+6. Agent invokes MCP tool(s)
+7. Store assistant response in database
+8. Return response to client
+9. Server holds NO state
+
+**Rules:**
+- ❌ No in-memory conversation history
+- ❌ No session variables
+- ✅ All state persists to database
+- ✅ Any server instance handles any request
+- ✅ Horizontally scalable
+
+### VIII. Multi-User Architecture Maintained (from Phase 2)
+Data isolation enforced at 3 levels:
+1. **Database Level:** Foreign keys, cascading deletes
+2. **MCP Tool Level:** All tools filter by user_id from JWT
+3. **Frontend Level:** Token attachment to requests
+
+---
+
+## Phase 3: AI-Powered Chatbot Features
+
+### All Phase 1 & 2 Features (Maintained)
+All 5 basic features available through conversational interface:
+- [x] Add Task
+- [x] Delete Task
+- [x] Update Task
+- [x] View Task List
+- [x] Mark Complete
+
+### Phase 3 New Features
+- [x] **Conversational Interface** – Natural language task management
+- [x] **OpenAI ChatKit UI** – Drop-in chat widget
+- [x] **OpenAI Agents SDK** – Intelligent tool orchestration
+- [x] **Official MCP SDK** – Standardized tool definitions
+- [x] **Chat Endpoint** – Stateless POST /api/{user_id}/chat
+- [x] **Conversation Persistence** – Chat history in database
+- [x] **Multi-turn Conversations** – Context across messages
+- [x] **Error Recovery** – Graceful error handling
+- [x] **Tool Visualization** – ChatKit displays tool calls
+- [x] **Streaming Responses** – Real-time message delivery
+
+---
+
+## Technology Stack (Phase 3)
+
+### Frontend
+| Component | Technology |
+|---|---|
+| **Chat UI** | @openai/chatkit-react (Official ChatKit) |
+| **Web Framework** | Next.js 16+ |
+| **Language** | TypeScript |
+| **Styling** | Tailwind CSS |
+| **Authentication** | Better Auth |
+
+### Backend
+| Component | Technology |
+|---|---|
+| **Framework** | FastAPI |
+| **Language** | Python 3.13+ |
+| **Agent Framework** | OpenAI Agents SDK |
+| **Tool Protocol** | Official MCP SDK |
+| **ORM** | SQLModel |
+| **Server** | uvicorn |
+
+### Database & Infrastructure
+| Component | Technology |
+|---|---|
+| **Database** | Neon PostgreSQL |
+| **Authentication** | JWT + Better Auth |
+| **Chat API** | FastAPI (stateless) |
+| **Deployment** | Vercel (frontend) + server (backend) |
+
+---
+
+## Project Structure (Phase 3)
+
+```
+TaskPilotAI/
+├── docs/                               # NEW: Reference Documentation
+│   ├── REFERENCE-OPENAI-CHATKIT.md
+│   ├── REFERENCE-OPENAI-AGENTS-SDK.md
+│   └── REFERENCE-MCP-PROTOCOL.md
+│
+├── specs/
+│   ├── features/
+│   │   └── chatbot.md                  # NEW: Conversational interface
+│   ├── api/
+│   │   └── mcp-tools.md                # NEW: MCP tool specs
+│   └── database/
+│       └── migrations/                 # NEW: Phase 3 schema
+│
+├── frontend/
+│   ├── components/
+│   │   └── Chat/
+│   │       └── ChatWindow.tsx          # NEW: ChatKit wrapper
+│   ├── app/
+│   │   └── chatbot/page.tsx            # NEW: Chatbot page
+│   └── .env.local
+│
+├── backend/
+│   ├── mcp/                            # NEW: MCP Server
+│   │   ├── server.py
+│   │   └── tools/                      # 5 tools
+│   ├── agents/                         # NEW: Agent logic
+│   │   └── task_agent.py
+│   ├── routes/
+│   │   └── chat.py                     # NEW: Chat endpoint
+│   ├── models.py                       # Extended
+│   └── requirements.txt                # Extended
+│
+└── .specify/
+    └── memory/
+        └── constitution.md             # This file (v3.0.0)
+```
+
+---
+
+## Reference Documentation Files (Phase 3)
+
+Created and saved in `/docs/` for future use:
+
+### 1. REFERENCE-OPENAI-CHATKIT.md
+- ChatKit overview and features
+- Installation and setup steps
+- Domain allowlist configuration
+- Backend integration examples
+- Event handlers and customization
+- Performance optimization
+- Troubleshooting guide
+
+### 2. REFERENCE-OPENAI-AGENTS-SDK.md
+- Agents SDK overview
+- Core primitives (agents, tools, handoffs)
+- Tool integration patterns
+- Streaming examples
+- Best practices for Phase 3
+- Official resource links
+
+### 3. REFERENCE-MCP-PROTOCOL.md
+- MCP specification overview
+- Tool definition and invocation
+- Server/client architecture
+- Python SDK examples
+- Security best practices
+- Phase 3 integration pattern
+- Official resource links
+
+**Usage:** Refer to these documents when implementing Phase 3 features. They contain detailed examples, patterns, and best practices.
+
+---
+
+## Quality Gates (ALL REQUIRED for Phase 3)
+
+### Specification Gates
+- ✅ All feature specs complete
+- ✅ MCP tool specs documented
+- ✅ Chat endpoint API defined
+- ✅ Conversation/message schema validated
+- ✅ ChatKit config documented
+- ✅ Error scenarios defined
+
+### Code Quality Gates
+- ✅ Backend: mypy (0 errors), flake8 (0 errors)
+- ✅ Frontend: ESLint (0 errors), TypeScript (0 errors)
+- ✅ Coverage: ≥95% (backend), ≥90% (frontend)
+- ✅ No hardcoded secrets or API keys
+- ✅ ChatKit properly configured
+
+### Functional Gates
+- ✅ All tests passing (100%)
+- ✅ All Phase 1 & 2 features work through chat
+- ✅ Chat endpoint stateless
+- ✅ MCP tools validate user_id
+- ✅ Agent invokes correct tools
+- ✅ Conversations persist
+- ✅ ChatKit displays messages and tools
+- ✅ Domain allowlist works
+
+---
+
+## Non-Negotiable Rules (Phase 3)
+
+- ❌ Cannot write code without tests
+- ❌ Cannot skip specification phase
+- ❌ Cannot implement task operations without MCP tools
+- ❌ Cannot keep state in server memory
+- ❌ Cannot call database from frontend
+- ❌ Cannot violate user isolation
+- ❌ Cannot hardcode API keys
+- ❌ Cannot build custom chat UI (use ChatKit)
+- ❌ Cannot skip domain config for production
+- ❌ Cannot implement Phase 4+ features
+- ❌ Cannot modify constitution without approval
+- ❌ Cannot deploy without all gates passing
+
+---
+
+## Success Criteria (Phase 3 Complete When)
+
+### Implementation
+- ✅ Backend: FastAPI + MCP + Agents with 5 tools
+- ✅ Frontend: Next.js + ChatKit + Chat client
+- ✅ Database: Extended with Conversation/Message tables
+- ✅ Agent: Invokes MCP tools autonomously
+- ✅ Conversations: Persisted to database
+
+### Quality
+- ✅ All tests passing (100%)
+- ✅ Coverage ≥95% (backend), ≥90% (frontend)
+- ✅ No type errors, linting errors
+- ✅ All Phase 1 & 2 features work
+
+### Functional
+- ✅ User can create/list/update/delete/complete tasks via chat
+- ✅ Agent chains tools for complex operations
+- ✅ Conversation history maintained
+- ✅ User isolation enforced
+- ✅ Server stateless
+- ✅ ChatKit displays tools and messages
+- ✅ Messages stream in real-time
+
+### Deployment
+- ✅ MCP server configured
+- ✅ Agent initialized with OpenAI credentials
+- ✅ Chat endpoint secured with JWT
+- ✅ Frontend deployable to Vercel
+- ✅ Domain allowlist configured
+- ✅ Backend deployable with MCP
+- ✅ Database migrations applied
+- ✅ README and CLAUDE.md updated
+
+---
+
+## Key Architectural Decisions
+
+### Decision 1: Use Official MCP SDK
+- **Chosen:** Official Python SDK from modelcontextprotocol.io
+- **Rationale:** Vendor-neutral, enterprise-grade, Linux Foundation backed
+- **Alternative rejected:** Building custom tool system
+
+### Decision 2: Use OpenAI Agents SDK
+- **Chosen:** Official Agents SDK for tool orchestration
+- **Rationale:** Handles tool selection, context, streaming automatically
+- **Alternative rejected:** Manual agent implementation
+
+### Decision 3: Use OpenAI ChatKit
+- **Chosen:** Official ChatKit drop-in widget
+- **Rationale:** Pre-built, maintained, streaming, tool visualization
+- **Alternative rejected:** Building custom chat UI
+
+### Decision 4: Stateless Server
+- **Chosen:** Zero in-memory state, all in database
+- **Rationale:** Horizontal scaling, resilience, simplicity
+- **Alternative rejected:** Session-based state management
+
+### Decision 5: Separate MCP Server
+- **Chosen:** MCP server as separate component
+- **Rationale:** Isolation, testability, future containerization
+- **Phase 4+:** Can be deployed separately
+
+---
+
+## Governance (Phase 3)
+
+### Constitution Authority
+This Phase 3 constitution is the source of truth for Phase 3 development.
+
+### Amendment Process
+Changes require:
+1. Proposal with rationale
+2. Impact analysis
+3. User approval
+
+### Compliance Verification
+Every commit checked for:
+- Specs complete
+- Quality gates pass
+- No scope creep
+- Tests cover new code
+- Data isolation enforced
+- Server stateless
+- No hardcoded secrets
+
+---
+
+## Timeline
+
+| Date | Milestone | Status |
+|---|---|---|
+| Dec 7, 2025 | Phase 1 Complete | ✅ |
+| Dec 14, 2025 | Phase 2 Complete | ✅ |
+| Dec 21, 2025 | Phase 3 Due | ⏳ In Progress |
+| Jan 4, 2026 | Phase 4 Due | Future |
+| Jan 18, 2026 | Phase 5 Due | Future |
+
+---
+
+**Version**: 3.0.0
+**Ratified**: 2025-12-07 (Phase 1 & 2)
+**Last Amended**: 2025-12-14 (Phase 3 Addition)
+**Status**: Active for Phase 1, Phase 2, & Phase 3
+**Next Review**: Post Phase 3 Completion
+
+---
+
+## Sources & References
+
+### Official Documentation
+- [OpenAI ChatKit GitHub](https://github.com/openai/chatkit-js)
+- [OpenAI Agents SDK Documentation](https://platform.openai.com/docs/guides/agents-sdk)
+- [Model Context Protocol Specification](https://modelcontextprotocol.io)
+- [Official MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
+- [Domain Allowlist Settings](https://platform.openai.com/settings/organization/security/domain-allowlist)
+
+### Reference Documents in Project
+- `/docs/REFERENCE-OPENAI-CHATKIT.md` – ChatKit implementation guide
+- `/docs/REFERENCE-OPENAI-AGENTS-SDK.md` – Agents SDK guide
+- `/docs/REFERENCE-MCP-PROTOCOL.md` – MCP protocol guide
+
+### Hackathon Documentation
+- `/hakcathon_2_doc.md` – Original hackathon requirements
+- `CLAUDE.md` – Claude Code workflow guidelines
