@@ -132,8 +132,8 @@ export default function DashboardPage() {
 
   const sidebarItems = [
     { label: "Dashboard", href: "/dashboard", icon: "📊", active: true, badge: null },
-    { label: "Tasks", href: "/dashboard/tasks", icon: "📋", active: false, badge: pendingCount > 0 ? `${pendingCount}` : null },
-    { label: "Settings", href: "/dashboard/settings", icon: "⚙️", active: false, badge: null },
+    { label: "Tasks", href: "/dashboard", icon: "📋", active: false, badge: pendingCount > 0 ? `${pendingCount}` : null },
+    { label: "Settings", href: "/dashboard", icon: "⚙️", active: false, badge: null },
   ];
 
   return (
