@@ -11,7 +11,13 @@ class Settings(BaseSettings):
     JWT_EXPIRY_SECONDS: int = 604800
     JWT_REFRESH_EXPIRY_SECONDS: int = 1209600
     BETTER_AUTH_SECRET: str = "dev-secret-key"
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000", "http://127.0.0.1:3000"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "https://task-pilot-ai-ashen.vercel.app",
+        "https://taskpilot-api-5l18.onrender.com"
+    ]
     ENVIRONMENT: str = "development"
 
     class Config:
