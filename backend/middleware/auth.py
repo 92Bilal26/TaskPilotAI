@@ -7,9 +7,9 @@ from config import settings
 
 class JWTAuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Skip auth for public endpoints
+        # Skip auth for public endpoints and CORS preflight requests
         public_paths = ["/auth/", "/health", "/docs", "/openapi.json", "/redoc"]
-        if any(request.url.path.startswith(path) for path in public_paths):
+        if request.method == "OPTIONS" or any(request.url.path.startswith(path) for path in public_paths):
             return await call_next(request)
         
         auth_header = request.headers.get("Authorization")

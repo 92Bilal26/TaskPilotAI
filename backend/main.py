@@ -19,7 +19,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# Add CORS middleware FIRST (will execute LAST - after JWT)
+# Add JWT middleware FIRST (will execute SECOND - after CORS)
+app.add_middleware(JWTAuthMiddleware)
+
+# Add CORS middleware LAST (will execute FIRST - before JWT)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -27,9 +30,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Add JWT middleware SECOND (will execute FIRST - before CORS)
-app.add_middleware(JWTAuthMiddleware)
 
 app.include_router(auth.router)
 app.include_router(tasks.router)
