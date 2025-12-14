@@ -60,14 +60,12 @@
 2. Click **+ Add** and add:
 
 ```
-NEXT_PUBLIC_API_URL=https://taskpilot-api-xyz123.railway.app
+NEXT_PUBLIC_API_URL=https://taskpilot-api-5l18.onrender.com
 ```
 
-### Replace with your actual Railway URL!
-
-Example values:
+### Your Render Backend URL (Already Deployed):
 ```
-NEXT_PUBLIC_API_URL=https://taskpilot-api-abc123xyz.railway.app
+NEXT_PUBLIC_API_URL=https://taskpilot-api-5l18.onrender.com
 ```
 
 **Note**: Only variables starting with `NEXT_PUBLIC_` are available in browser.
@@ -208,8 +206,8 @@ taskpilot.yourdomain.com
 
 Now that both frontend and backend are deployed:
 
-1. ✅ Backend URL: `https://taskpilot-api-abc123xyz.railway.app`
-2. ✅ Frontend URL: `https://taskpilot-frontend-xyz123.vercel.app`
+1. ✅ Backend URL: `https://taskpilot-api-5l18.onrender.com` (Already Live on Render!)
+2. 🚀 Frontend URL: `https://taskpilot-frontend-[your-vercel-domain].vercel.app` (To be generated after this deployment)
 3. **Next**: Record 90-second demo video
 4. **Then**: Submit to hackathon form
 
@@ -249,9 +247,9 @@ Now that both frontend and backend are deployed:
 - Refresh the page
 
 ### ❌ "Cannot connect to backend"
-- Verify NEXT_PUBLIC_API_URL is correct
-- Make sure Railway backend is running
-- Check CORS settings in backend
+- Verify NEXT_PUBLIC_API_URL is correct: `https://taskpilot-api-5l18.onrender.com`
+- Make sure Render backend is running
+- Check CORS settings in backend (must include your Vercel domain)
 
 ### ❌ "Build failed"
 - Check `npm run build` locally: `cd frontend && npm run build`
@@ -276,7 +274,7 @@ Perfect! Your full-stack application is now live! 🎉
 
 ## **Final Checklist Before Submission**
 
-- [ ] Backend deployed to Railway
+- [x] Backend deployed to Render: `https://taskpilot-api-5l18.onrender.com`
 - [ ] Frontend deployed to Vercel
 - [ ] Frontend can signin/signup
 - [ ] Frontend can create tasks
@@ -291,8 +289,8 @@ Perfect! Your full-stack application is now live! 🎉
 
 ```bash
 # Your deployed URLs
-Frontend: https://taskpilot-frontend-abc123.vercel.app
-Backend: https://taskpilot-api-xyz123.railway.app
+Frontend: https://taskpilot-frontend-[your-id].vercel.app (to be created in this guide)
+Backend: https://taskpilot-api-5l18.onrender.com (✅ Already Live!)
 
 # Test frontend locally before deploying
 cd frontend
