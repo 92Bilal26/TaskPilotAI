@@ -1,0 +1,408 @@
+{
+  "manifest_version": "1.0",
+  "skill_name": "render-deployment",
+  "display_name": "Render Backend Deployment - Automated Deploy",
+  "version": "1.0.0",
+  "description": "Automated deployment of FastAPI backends to Render.com with complete configuration, troubleshooting, and verification",
+
+  "metadata": {
+    "author": "TaskPilotAI Team",
+    "license": "MIT",
+    "repository": "https://github.com/92Bilal26/TaskPilotAI",
+    "homepage": "https://github.com/92Bilal26/TaskPilotAI",
+    "icon": "🚀",
+    "keywords": ["render", "deployment", "fastapi", "backend", "production", "cloud"],
+    "categories": ["deployment", "backend-deployment", "cloud-deployment"],
+    "created_at": "2025-12-14",
+    "updated_at": "2025-12-14"
+  },
+
+  "capabilities": {
+    "render_service_creation": {
+      "description": "Create and configure Render web service",
+      "supported": true
+    },
+    "environment_configuration": {
+      "description": "Set up environment variables and secrets",
+      "supported": true
+    },
+    "build_configuration": {
+      "description": "Configure build and start commands",
+      "supported": true
+    },
+    "deployment_troubleshooting": {
+      "description": "Diagnose and fix deployment issues",
+      "supported": true
+    },
+    "deployment_verification": {
+      "description": "Verify deployment health and functionality",
+      "supported": true
+    },
+    "continuous_deployment": {
+      "description": "Set up auto-deploy from GitHub",
+      "supported": true
+    },
+    "documentation_generation": {
+      "description": "Generate deployment management guides",
+      "supported": true
+    }
+  },
+
+  "subagents": {
+    "render-configurator": {
+      "description": "Configures Render web service settings",
+      "model": "sonnet",
+      "tools": ["Read", "Write", "Bash", "WebFetch"],
+      "priority": "high",
+      "responsibilities": [
+        "Create service configuration",
+        "Set environment variables",
+        "Configure build commands",
+        "Set up auto-deploy"
+      ]
+    },
+    "deployment-troubleshooter": {
+      "description": "Diagnoses and fixes deployment issues",
+      "model": "sonnet",
+      "tools": ["Read", "Grep", "Bash", "WebFetch"],
+      "priority": "high",
+      "responsibilities": [
+        "Analyze deployment logs",
+        "Identify configuration errors",
+        "Provide fix recommendations",
+        "Update configuration"
+      ]
+    },
+    "deployment-verifier": {
+      "description": "Verifies deployment success and health",
+      "model": "haiku",
+      "tools": ["Bash", "Read"],
+      "priority": "high",
+      "responsibilities": [
+        "Test health endpoint",
+        "Verify API endpoints",
+        "Check database connection",
+        "Validate environment variables"
+      ]
+    },
+    "environment-manager": {
+      "description": "Manages environment variables and secrets",
+      "model": "haiku",
+      "tools": ["Read", "Write"],
+      "priority": "medium",
+      "responsibilities": [
+        "Generate .env templates",
+        "Validate environment variables",
+        "Document required secrets",
+        "Provide security recommendations"
+      ]
+    }
+  },
+
+  "parameters": {
+    "required": [
+      "project_name",
+      "backend_directory",
+      "git_branch",
+      "database_url",
+      "jwt_secret",
+      "cors_origins"
+    ],
+    "optional": [
+      "python_version",
+      "workers",
+      "render_plan"
+    ],
+    "defaults": {
+      "backend_directory": "backend",
+      "git_branch": "main",
+      "python_version": "3.13",
+      "workers": 4,
+      "render_plan": "free"
+    }
+  },
+
+  "deployment_workflow": {
+    "steps": [
+      {
+        "step": 1,
+        "name": "Account Setup",
+        "description": "Create Render account and connect GitHub",
+        "estimated_time_minutes": 2,
+        "automated": false
+      },
+      {
+        "step": 2,
+        "name": "Repository Connection",
+        "description": "Link GitHub repository to Render",
+        "estimated_time_minutes": 2,
+        "automated": false
+      },
+      {
+        "step": 3,
+        "name": "Service Creation",
+        "description": "Create and configure web service",
+        "estimated_time_minutes": 3,
+        "automated": false
+      },
+      {
+        "step": 4,
+        "name": "Environment Configuration",
+        "description": "Set all required environment variables",
+        "estimated_time_minutes": 3,
+        "automated": true
+      },
+      {
+        "step": 5,
+        "name": "Initial Deployment",
+        "description": "Trigger first deployment and monitor",
+        "estimated_time_minutes": 5,
+        "automated": true
+      },
+      {
+        "step": 6,
+        "name": "Verification",
+        "description": "Test endpoints and validate deployment",
+        "estimated_time_minutes": 2,
+        "automated": true
+      },
+      {
+        "step": 7,
+        "name": "Documentation",
+        "description": "Generate management documentation",
+        "estimated_time_minutes": 1,
+        "automated": true
+      }
+    ],
+    "total_estimated_time_minutes": 18
+  },
+
+  "output_specification": {
+    "deliverables": {
+      "service_url": "Live backend URL (https://{name}.onrender.com)",
+      "health_endpoint": "Health check endpoint (/health)",
+      "api_documentation": "API docs endpoint (/docs)",
+      "management_guide": "RENDER_BACKEND_MANAGEMENT.md",
+      "deployment_guide": "RENDER_DEPLOYMENT_GUIDE.md",
+      "testing_checklist": "INTEGRATION_TESTING_CHECKLIST.md",
+      "deployment_summary": "DEPLOYMENT_SUMMARY.md"
+    },
+    "expected_metrics": {
+      "deployment_time_minutes": "3-5",
+      "health_check_response_ms": "<500",
+      "api_response_time_ms": "<1000",
+      "uptime_percentage": 99.9,
+      "build_success_rate": 95
+    },
+    "quality_gates": [
+      "Health endpoint returns 200 OK",
+      "All API endpoints accessible",
+      "Database connection verified",
+      "CORS configured correctly",
+      "JWT authentication working",
+      "Auto-deploy enabled",
+      "Documentation complete"
+    ]
+  },
+
+  "troubleshooting": {
+    "common_issues": [
+      {
+        "issue": "Repository access denied",
+        "symptom": "Cannot clone repository",
+        "solution": "Authorize Render GitHub app",
+        "automated_fix": false
+      },
+      {
+        "issue": "Requirements file not found",
+        "symptom": "Could not open requirements file",
+        "solution": "Set Root Directory to 'backend'",
+        "automated_fix": true
+      },
+      {
+        "issue": "Gunicorn not installed",
+        "symptom": "gunicorn: command not found",
+        "solution": "Add gunicorn>=21.2.0 to requirements.txt",
+        "automated_fix": true
+      },
+      {
+        "issue": "Port binding error",
+        "symptom": "unrecognized arguments: --port",
+        "solution": "Use --bind 0.0.0.0:$PORT",
+        "automated_fix": true
+      },
+      {
+        "issue": "Database connection failed",
+        "symptom": "sqlalchemy.exc.DatabaseError",
+        "solution": "Verify DATABASE_URL and sslmode=require",
+        "automated_fix": false
+      },
+      {
+        "issue": "CORS errors",
+        "symptom": "Access-Control-Allow-Origin error",
+        "solution": "Add frontend URL to CORS_ORIGINS",
+        "automated_fix": true
+      }
+    ]
+  },
+
+  "render_configuration": {
+    "service_type": "Web Service",
+    "runtime": "Python",
+    "region": "Auto-select",
+    "root_directory": "{backend_directory}",
+    "build_command": "pip install -r requirements.txt",
+    "start_command": "gunicorn main:app --workers {workers} --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT",
+    "health_check_path": "/health",
+    "auto_deploy": true,
+    "environment_variables": {
+      "required": [
+        "DATABASE_URL",
+        "JWT_SECRET",
+        "JWT_ALGORITHM",
+        "JWT_EXPIRY_SECONDS",
+        "JWT_REFRESH_EXPIRY_SECONDS",
+        "BETTER_AUTH_SECRET",
+        "CORS_ORIGINS",
+        "ENVIRONMENT"
+      ],
+      "optional": [
+        "LOG_LEVEL",
+        "DEBUG",
+        "ALLOWED_HOSTS"
+      ]
+    }
+  },
+
+  "execution": {
+    "estimated_time_minutes": 18,
+    "estimated_time_range": "10-20",
+    "cost_estimate": "low",
+    "parallelizable": false,
+    "requires_internet": true,
+    "requires_render_account": true,
+    "requires_github_account": true,
+    "requires_database": true
+  },
+
+  "pricing": {
+    "free_tier": {
+      "cost_monthly": 0,
+      "hours_included": 750,
+      "sleep_after_inactivity_minutes": 15,
+      "cold_start_seconds": 30,
+      "limitations": ["Public repos only", "Service sleeps", "Community support"]
+    },
+    "starter_tier": {
+      "cost_monthly": 7,
+      "hours_included": "Unlimited",
+      "always_running": true,
+      "features": ["Private repos", "No sleep", "Email support", "Custom domains"]
+    }
+  },
+
+  "use_cases": [
+    "Deploy FastAPI backend to production",
+    "Set up continuous deployment pipeline",
+    "Deploy multi-user authentication backend",
+    "Production deployment for hackathons",
+    "Deploy RESTful API with PostgreSQL",
+    "Microservices deployment"
+  ],
+
+  "files": {
+    "documentation": [
+      "README.md",
+      "DEPLOYMENT_GUIDE.md",
+      "TROUBLESHOOTING.md"
+    ],
+    "skill_definition": "skill-definition.yaml",
+    "manifest": "manifest.json",
+    "subagents": "SUBAGENTS.md",
+    "scripts": [
+      "scripts/deploy-to-render.sh",
+      "scripts/verify-deployment.sh",
+      "scripts/update-environment.sh"
+    ]
+  },
+
+  "compatibility": {
+    "platforms": [
+      "claude-code",
+      "claude-api",
+      "claude-sdk"
+    ],
+    "frameworks": [
+      "FastAPI"
+    ],
+    "databases": [
+      "PostgreSQL",
+      "Neon PostgreSQL"
+    ],
+    "hosting": [
+      "Render.com"
+    ]
+  },
+
+  "dependencies": {
+    "external_services": {
+      "render": {
+        "required": true,
+        "url": "https://render.com",
+        "purpose": "Hosting platform"
+      },
+      "github": {
+        "required": true,
+        "url": "https://github.com",
+        "purpose": "Source code repository"
+      },
+      "neon": {
+        "required": false,
+        "url": "https://neon.tech",
+        "purpose": "PostgreSQL database (or any PostgreSQL provider)"
+      }
+    },
+    "python_packages": [
+      "fastapi>=0.109.0",
+      "uvicorn[standard]>=0.27.0",
+      "gunicorn>=21.2.0",
+      "sqlmodel>=0.0.14",
+      "python-jose[cryptography]>=3.3.0",
+      "passlib[bcrypt]>=1.7.4"
+    ]
+  },
+
+  "limitations": [
+    "Render platform only",
+    "FastAPI applications only",
+    "PostgreSQL databases only",
+    "GitHub repositories only",
+    "Free tier sleeps after 15 minutes inactivity"
+  ],
+
+  "support": {
+    "documentation_url": "https://github.com/92Bilal26/TaskPilotAI/tree/phase-2/.claude/skills/render-deployment",
+    "issues_url": "https://github.com/92Bilal26/TaskPilotAI/issues",
+    "email": "support@taskpilotai.dev"
+  },
+
+  "validation": {
+    "enabled": true,
+    "checks": [
+      "service_created",
+      "environment_variables_set",
+      "build_successful",
+      "deployment_successful",
+      "health_endpoint_accessible",
+      "database_connected",
+      "documentation_generated"
+    ]
+  },
+
+  "status": {
+    "current": "active",
+    "stability": "stable",
+    "maturity": "production",
+    "maintenance_status": "actively-maintained"
+  }
+}

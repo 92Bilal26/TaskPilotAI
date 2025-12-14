@@ -1,0 +1,381 @@
+---
+# Render Backend Deployment Skill Definition
+# Enables automated deployment of FastAPI backends to Render.com
+
+name: render-deployment
+version: 1.0.0
+display_name: "Render Backend Deployment - Automated Deploy"
+
+description: |
+  Automated deployment skill for deploying FastAPI backends to Render.com platform.
+  This skill handles complete deployment workflow including configuration, troubleshooting,
+  environment setup, and verification. Supports Python FastAPI applications with PostgreSQL
+  databases (Neon, Railway, etc.).
+
+author: TaskPilotAI Team
+email: support@taskpilotai.dev
+repository: https://github.com/92Bilal26/TaskPilotAI
+documentation: https://github.com/92Bilal26/TaskPilotAI/tree/phase-2/.claude/skills/render-deployment
+
+# Categorization
+category: deployment
+subcategories:
+  - backend-deployment
+  - cloud-deployment
+  - platform-as-a-service
+  - production-deployment
+  - python-deployment
+
+tags:
+  - render
+  - fastapi
+  - python
+  - backend
+  - deployment
+  - production
+  - cloud
+  - postgres
+  - gunicorn
+  - uvicorn
+  - jwt
+  - authentication
+  - neon
+
+# Capabilities
+capabilities:
+  - render-service-creation
+  - environment-configuration
+  - build-command-setup
+  - start-command-configuration
+  - database-connection
+  - troubleshooting
+  - deployment-verification
+  - continuous-deployment-setup
+  - cors-configuration
+  - jwt-configuration
+
+# Platform compatibility
+compatibility:
+  - claude-code
+  - claude-api
+  - claude-sdk
+  - claude-web
+
+# Execution characteristics
+execution:
+  estimated-time: "10-20 minutes"
+  cost-estimate: "low"
+  parallelizable: false
+
+  subagents:
+    - render-configurator
+    - deployment-troubleshooter
+    - deployment-verifier
+    - environment-manager
+
+# Input parameters
+parameters:
+  project_name:
+    type: string
+    description: "Name of the project to deploy"
+    required: true
+    example: "TaskPilotAI"
+    constraints:
+      - min_length: 3
+      - max_length: 50
+      - pattern: "^[A-Za-z][A-Za-z0-9-]*$"
+
+  backend_directory:
+    type: string
+    description: "Directory containing backend code"
+    required: true
+    default: "backend"
+    example: "backend"
+
+  git_branch:
+    type: string
+    description: "Git branch to deploy"
+    required: true
+    default: "main"
+    example: "phase-2"
+
+  database_url:
+    type: string
+    description: "PostgreSQL database connection string"
+    required: true
+    example: "postgresql://user:pass@host/database?sslmode=require"
+    sensitive: true
+
+  python_version:
+    type: string
+    description: "Target Python version"
+    required: false
+    default: "3.13"
+    options:
+      - "3.13"
+      - "3.12"
+      - "3.11"
+
+  jwt_secret:
+    type: string
+    description: "JWT secret key (minimum 32 characters)"
+    required: true
+    sensitive: true
+    constraints:
+      - min_length: 32
+
+  cors_origins:
+    type: array
+    description: "Allowed CORS origins"
+    required: true
+    example: ["https://myapp.vercel.app", "http://localhost:3000"]
+
+  workers:
+    type: integer
+    description: "Number of gunicorn workers"
+    required: false
+    default: 4
+    constraints:
+      - min: 1
+      - max: 8
+
+  render_plan:
+    type: string
+    description: "Render pricing plan"
+    required: false
+    default: "free"
+    options:
+      - free
+      - starter
+      - standard
+      - pro
+
+# Output specification
+output:
+  type: deployment
+  structure:
+    service_url: "https://{service-name}.onrender.com"
+    health_endpoint: "https://{service-name}.onrender.com/health"
+    api_docs: "https://{service-name}.onrender.com/docs"
+
+  deliverables:
+    - "Live backend URL"
+    - "Deployment configuration documentation"
+    - "Environment variables configuration"
+    - "Troubleshooting guide"
+    - "Integration testing checklist"
+    - "Management procedures"
+
+# Quality guarantees
+quality_metrics:
+  deployment_success_rate: "95%+"
+  health_check_response_time: "<500ms"
+  uptime: "99.9%" # on paid tier
+  database_connection: "verified"
+
+# Constitution gates
+constitution_gates:
+  - deployment-configuration: "✅ PASS"
+  - environment-variables: "✅ PASS"
+  - database-connection: "✅ PASS"
+  - cors-configuration: "✅ PASS"
+  - health-check: "✅ PASS"
+  - api-endpoints: "✅ PASS"
+  - documentation: "✅ PASS"
+
+# Requirements
+requirements:
+  render_account: true
+  github_account: true
+  github_repository: true
+  database_provisioned: true
+
+  dependencies:
+    - git
+    - curl
+    - python
+
+# Deployment steps
+deployment_workflow:
+  steps:
+    1_account_setup:
+      name: "Create Render Account"
+      description: "Sign up for Render account via GitHub"
+      estimated_time: "2 minutes"
+
+    2_repository_connection:
+      name: "Connect GitHub Repository"
+      description: "Link GitHub repository to Render"
+      estimated_time: "2 minutes"
+
+    3_service_creation:
+      name: "Create Web Service"
+      description: "Configure new web service in Render"
+      estimated_time: "3 minutes"
+
+    4_environment_configuration:
+      name: "Set Environment Variables"
+      description: "Configure all required environment variables"
+      estimated_time: "3 minutes"
+
+    5_deployment:
+      name: "Trigger Initial Deployment"
+      description: "Build and deploy the application"
+      estimated_time: "3-5 minutes"
+
+    6_verification:
+      name: "Verify Deployment"
+      description: "Test health endpoint and API endpoints"
+      estimated_time: "2 minutes"
+
+    7_documentation:
+      name: "Generate Documentation"
+      description: "Create deployment management guide"
+      estimated_time: "1 minute"
+
+# Common issues and solutions
+troubleshooting:
+  repository_access:
+    issue: "Cannot access GitHub repository"
+    solution: "Authorize Render GitHub app in GitHub settings"
+
+  missing_requirements:
+    issue: "requirements.txt not found"
+    solution: "Set Root Directory to backend folder"
+
+  gunicorn_not_found:
+    issue: "gunicorn: command not found"
+    solution: "Add gunicorn>=21.2.0 to requirements.txt"
+
+  port_binding_error:
+    issue: "gunicorn: unrecognized arguments: --port"
+    solution: "Use --bind 0.0.0.0:$PORT instead of --port $PORT"
+
+  database_connection_failed:
+    issue: "Database connection refused"
+    solution: "Verify DATABASE_URL and ensure ?sslmode=require for Neon"
+
+  cors_errors:
+    issue: "CORS errors from frontend"
+    solution: "Add frontend URL to CORS_ORIGINS environment variable"
+
+# Use cases
+use_cases:
+  - "Deploy FastAPI backend to production"
+  - "Set up continuous deployment from GitHub"
+  - "Configure multi-user authentication backend"
+  - "Deploy RESTful API with PostgreSQL"
+  - "Production deployment for hackathon projects"
+  - "Deploy microservices architecture"
+
+# Limitations
+limitations:
+  - "Render platform only (not AWS, GCP, Azure)"
+  - "FastAPI applications only (not Django, Flask)"
+  - "PostgreSQL databases only (not MySQL, MongoDB)"
+  - "Requires GitHub repository (not GitLab, Bitbucket)"
+  - "Free tier has 15-minute sleep after inactivity"
+
+# Render-specific configuration
+render_configuration:
+  service_type: "Web Service"
+  runtime: "Python 3"
+
+  build_command: "pip install -r requirements.txt"
+  start_command: "gunicorn main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT"
+
+  required_env_vars:
+    - DATABASE_URL
+    - JWT_SECRET
+    - JWT_ALGORITHM
+    - JWT_EXPIRY_SECONDS
+    - JWT_REFRESH_EXPIRY_SECONDS
+    - BETTER_AUTH_SECRET
+    - CORS_ORIGINS
+    - ENVIRONMENT
+
+  auto_deploy: true
+  health_check_path: "/health"
+
+# Pricing tiers
+pricing:
+  free:
+    cost: "$0/month"
+    features:
+      - "750 hours/month"
+      - "Sleeps after 15 min inactivity"
+      - "Public GitHub repos only"
+      - "Community support"
+    limitations:
+      - "Service sleeps after 15 minutes"
+      - "Cold start takes ~30 seconds"
+
+  starter:
+    cost: "$7/month"
+    features:
+      - "Always running (no sleep)"
+      - "Private GitHub repos"
+      - "Email support"
+      - "Custom domains"
+    limitations: []
+
+# Files and resources
+resources:
+  documentation:
+    - "RENDER_BACKEND_MANAGEMENT.md"
+    - "RENDER_DEPLOYMENT_GUIDE.md"
+    - "INTEGRATION_TESTING_CHECKLIST.md"
+    - "DEPLOYMENT_SUMMARY.md"
+
+  scripts:
+    - "scripts/deploy-to-render.sh"
+    - "scripts/verify-deployment.sh"
+    - "scripts/update-environment.sh"
+
+# Metadata
+metadata:
+  created: 2025-12-14
+  last_updated: 2025-12-14
+  version_history:
+    - version: 1.0.0
+      date: 2025-12-14
+      notes: "Initial release with complete Render deployment support"
+
+  related_skills:
+    - vercel-deployment
+    - railway-deployment
+    - database-setup
+
+  integrations:
+    - "Render.com"
+    - "GitHub"
+    - "Neon PostgreSQL"
+    - "FastAPI"
+    - "Gunicorn"
+    - "Uvicorn"
+
+# Status
+status: active
+stability: stable
+maturity: production
+
+# Keywords for discovery
+keywords:
+  - render
+  - deployment
+  - fastapi
+  - backend
+  - python
+  - production
+  - cloud
+  - paas
+  - gunicorn
+  - uvicorn
+  - postgresql
+  - neon
+  - jwt
+  - authentication
+  - cors
+  - continuous-deployment
+  - cd
+  - devops
