@@ -87,7 +87,12 @@ export class ApiClient {
         headers,
       });
 
-      const data = await response.json();
+      // Handle 204 No Content (e.g., DELETE operations)
+      let data: any = null;
+      if (response.status !== 204) {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : null;
+      }
 
       if (!response.ok) {
         if (response.status === 401) {
