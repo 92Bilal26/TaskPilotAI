@@ -1,0 +1,553 @@
+---
+# TaskPilot Phase 2 Blueprint Skill Definition
+# Full-Stack Web Application with Next.js + FastAPI + PostgreSQL
+
+name: taskpilot-phase2-blueprint
+version: 2.0.0
+display_name: "TaskPilot Phase 2 - Full-Stack Web App Generator"
+
+description: |
+  Generate production-ready full-stack web applications from a single command.
+  This blueprint provides complete multi-user task management applications with:
+
+  - Next.js 16 frontend with React 19 and TypeScript
+  - FastAPI backend with JWT authentication
+  - PostgreSQL database (Neon)
+  - Deployment to Vercel + Render
+  - Complete CI/CD pipeline
+  - Comprehensive testing and documentation
+
+author: TaskPilotAI Team
+email: support@taskpilotai.dev
+repository: https://github.com/92Bilal26/TaskPilotAI
+documentation: https://github.com/92Bilal26/TaskPilotAI/tree/phase-2
+
+# Categorization
+category: full-stack-generation
+subcategories:
+  - web-application-generation
+  - frontend-backend-generation
+  - deployment-automation
+  - multi-user-applications
+
+tags:
+  - nextjs
+  - react
+  - fastapi
+  - python
+  - typescript
+  - postgresql
+  - neon
+  - vercel
+  - render
+  - jwt
+  - authentication
+  - full-stack
+  - web-app
+  - production-ready
+  - deployment
+
+# Capabilities
+capabilities:
+  - fullstack-project-scaffolding
+  - frontend-generation
+  - backend-api-generation
+  - database-schema-generation
+  - authentication-system
+  - deployment-configuration
+  - ci-cd-pipeline-setup
+  - test-generation
+  - documentation-generation
+  - multi-user-support
+  - api-endpoint-generation
+
+# Platform compatibility
+compatibility:
+  - claude-code
+  - claude-api
+  - claude-sdk
+
+# Execution characteristics
+execution:
+  estimated-time: "30-60 minutes"
+  cost-estimate: "high"
+  parallelizable: true
+
+  subagents:
+    - spec-generator
+    - frontend-generator
+    - backend-generator
+    - database-generator
+    - deployment-configurator
+    - test-generator
+    - documentation-generator
+
+# Input parameters
+parameters:
+  app_name:
+    type: string
+    description: "Name of the application to generate"
+    required: true
+    example: "TaskPilotAI"
+    constraints:
+      - min_length: 3
+      - max_length: 50
+      - pattern: "^[A-Za-z][A-Za-z0-9]*$"
+
+  description:
+    type: string
+    description: "Project description"
+    required: false
+    default: "A full-stack task management web application"
+    example: "Multi-user task manager with real-time updates"
+
+  features:
+    type: array
+    description: "Additional features beyond core CRUD"
+    required: false
+    default: []
+    example: ["real-time-updates", "file-attachments", "task-sharing"]
+    options:
+      - real-time-updates
+      - file-attachments
+      - task-sharing
+      - notifications
+      - task-templates
+      - analytics
+
+  database_provider:
+    type: string
+    description: "PostgreSQL database provider"
+    required: false
+    default: "neon"
+    options:
+      - neon
+      - railway
+      - supabase
+      - render
+
+  frontend_deployment:
+    type: string
+    description: "Frontend deployment platform"
+    required: false
+    default: "vercel"
+    options:
+      - vercel
+      - netlify
+      - cloudflare-pages
+
+  backend_deployment:
+    type: string
+    description: "Backend deployment platform"
+    required: false
+    default: "render"
+    options:
+      - render
+      - railway
+      - fly-io
+
+  include_analytics:
+    type: boolean
+    description: "Include analytics dashboard"
+    required: false
+    default: false
+
+  include_admin_panel:
+    type: boolean
+    description: "Include admin panel"
+    required: false
+    default: false
+
+  tailwind_ui:
+    type: boolean
+    description: "Use Tailwind CSS for styling"
+    required: false
+    default: true
+
+  initialize_git:
+    type: boolean
+    description: "Initialize Git repository"
+    required: false
+    default: true
+
+# Output specification
+output:
+  type: fullstack-project
+  structure:
+    root: "{app_name}/"
+    directories:
+      # Frontend
+      - frontend/
+      - frontend/app/
+      - frontend/app/auth/
+      - frontend/app/dashboard/
+      - frontend/lib/
+      - frontend/components/
+      - frontend/types/
+
+      # Backend
+      - backend/
+      - backend/routes/
+      - backend/middleware/
+      - backend/models/
+      - backend/tests/
+
+      # Specs
+      - specs/
+      - specs/features/
+      - specs/api/
+      - specs/database/
+
+      # Deployment
+      - .github/
+      - .github/workflows/
+
+      # Documentation
+      - docs/
+
+    files_count: "100+"
+    lines_of_code: "~20000+"
+    test_count: "150+"
+    documentation_files: "15+"
+    specification_files: "10+"
+
+# Quality guarantees
+quality_metrics:
+  frontend_test_coverage: "85%+"
+  backend_test_coverage: "95%+"
+  type_errors: "0"
+  style_errors: "0"
+  type_hints_coverage: "100%"
+  api_endpoints: "10+"
+  database_tables: "2+"
+
+# Architecture specification
+architecture:
+  frontend:
+    framework: "Next.js 16"
+    language: "TypeScript"
+    ui_library: "React 19"
+    styling: "Tailwind CSS"
+    state_management: "React Hooks"
+    authentication: "Better Auth SDK"
+    api_client: "Custom ApiClient class"
+    routing: "App Router"
+    deployment: "Vercel"
+
+  backend:
+    framework: "FastAPI"
+    language: "Python 3.13+"
+    database_orm: "SQLModel"
+    authentication: "JWT (python-jose)"
+    password_hashing: "bcrypt (passlib)"
+    asgi_server: "uvicorn + gunicorn"
+    validation: "Pydantic"
+    deployment: "Render"
+
+  database:
+    type: "PostgreSQL"
+    provider: "Neon (serverless)"
+    orm: "SQLModel"
+    migrations: "Alembic"
+    connection_pooling: true
+
+  deployment:
+    frontend_platform: "Vercel"
+    backend_platform: "Render"
+    database_platform: "Neon"
+    ci_cd: "GitHub Actions"
+    auto_deploy: true
+
+# API Endpoints specification
+api_endpoints:
+  authentication:
+    - POST /auth/signup
+    - POST /auth/signin
+    - POST /auth/refresh
+
+  tasks:
+    - GET /tasks
+    - POST /tasks
+    - GET /tasks/{id}
+    - PUT /tasks/{id}
+    - DELETE /tasks/{id}
+    - PATCH /tasks/{id}/complete
+    - GET /tasks/filter/pending
+    - GET /tasks/filter/completed
+
+  health:
+    - GET /health
+
+# Database schema
+database_schema:
+  tables:
+    user:
+      fields:
+        - id: UUID (primary key)
+        - email: String (unique, indexed)
+        - name: String
+        - password_hash: String
+        - emailVerified: Boolean
+        - createdAt: DateTime
+        - updatedAt: DateTime
+      relationships:
+        - tasks: One-to-Many → Task (cascade delete)
+
+    task:
+      fields:
+        - id: UUID (primary key)
+        - user_id: UUID (foreign key → User)
+        - title: String (required)
+        - description: String (optional)
+        - completed: Boolean (default: false)
+        - created_at: DateTime (indexed)
+        - updated_at: DateTime
+      relationships:
+        - user: Many-to-One → User
+
+# Frontend pages
+frontend_pages:
+  public:
+    - "/" - Landing/Home page
+    - "/auth/signin" - Signin page
+    - "/auth/signup" - Signup page
+
+  protected:
+    - "/dashboard" - Main task management dashboard
+
+# Constitution gates
+constitution_gates:
+  - code-quality: "✅ PASS"
+  - testing: "✅ PASS"
+  - type-safety: "✅ PASS"
+  - code-style: "✅ PASS"
+  - architecture: "✅ PASS"
+  - security: "✅ PASS"
+  - authentication: "✅ PASS"
+  - user-isolation: "✅ PASS"
+  - database-design: "✅ PASS"
+  - api-design: "✅ PASS"
+  - deployment: "✅ PASS"
+  - documentation: "✅ PASS"
+
+# Requirements
+requirements:
+  node_minimum: "18.0"
+  node_recommended: "20.0+"
+  python_minimum: "3.13"
+  python_recommended: "3.13+"
+
+  accounts_required:
+    - github
+    - vercel
+    - render
+    - neon
+
+  disk_space_required: "~200MB"
+  memory_required: "1GB"
+  execution_time: "30-60 minutes"
+
+  dependencies:
+    - node
+    - npm
+    - python
+    - pip
+    - git
+    - curl
+
+# Deployment workflow
+deployment_workflow:
+  database:
+    provider: neon
+    steps:
+      - Create Neon account
+      - Create PostgreSQL database
+      - Get connection string
+      - Configure in backend .env
+
+  backend:
+    platform: render
+    steps:
+      - Create Render account
+      - Connect GitHub repository
+      - Configure web service
+      - Set environment variables
+      - Deploy backend
+      - Get backend URL
+
+  frontend:
+    platform: vercel
+    steps:
+      - Create Vercel account
+      - Import GitHub repository
+      - Set environment variables
+      - Deploy frontend
+      - Get frontend URL
+
+# Use cases
+use_cases:
+  - "Full-stack web application development"
+  - "Multi-user SaaS applications"
+  - "Hackathon full-stack projects"
+  - "Portfolio full-stack projects"
+  - "Production-ready task management systems"
+  - "Learning full-stack development"
+  - "Rapid prototyping with deployment"
+
+# Limitations
+limitations:
+  - "Next.js + FastAPI stack only"
+  - "PostgreSQL database only"
+  - "JWT authentication only"
+  - "Vercel + Render deployment (configurable)"
+  - "Requires external service accounts"
+
+# Phase comparison
+phase_comparison:
+  phase_1:
+    - "Python CLI application"
+    - "In-memory storage"
+    - "Single user"
+    - "Terminal UI"
+    - "Local execution only"
+    - "~8400 lines of code"
+    - "84 tests"
+
+  phase_2:
+    - "Full-stack web application"
+    - "PostgreSQL database"
+    - "Multi-user with authentication"
+    - "Web UI (React)"
+    - "Cloud deployment (Vercel + Render)"
+    - "~20000+ lines of code"
+    - "150+ tests"
+
+# Future enhancements
+roadmap:
+  phase_3:
+    - "AI chatbot integration (OpenAI Agents SDK)"
+    - "MCP server support"
+    - "Real-time collaboration"
+    - "Advanced analytics dashboard"
+    - "Mobile app (React Native)"
+    - "Kubernetes deployment"
+
+# Files and resources
+resources:
+  scripts:
+    - "scripts/generate-fullstack.sh"
+    - "scripts/setup-database.sh"
+    - "scripts/deploy-backend.sh"
+    - "scripts/deploy-frontend.sh"
+    - "scripts/validate-deployment.sh"
+
+  templates:
+    frontend:
+      - "templates/frontend/app/page.tsx"
+      - "templates/frontend/app/layout.tsx"
+      - "templates/frontend/app/auth/signin/page.tsx"
+      - "templates/frontend/app/auth/signup/page.tsx"
+      - "templates/frontend/app/dashboard/page.tsx"
+      - "templates/frontend/lib/api.ts"
+      - "templates/frontend/lib/auth-client.ts"
+      - "templates/frontend/types/index.ts"
+      - "templates/frontend/package.json"
+      - "templates/frontend/tsconfig.json"
+      - "templates/frontend/tailwind.config.ts"
+      - "templates/frontend/next.config.js"
+
+    backend:
+      - "templates/backend/main.py"
+      - "templates/backend/models.py"
+      - "templates/backend/config.py"
+      - "templates/backend/db.py"
+      - "templates/backend/routes/auth.py"
+      - "templates/backend/routes/tasks.py"
+      - "templates/backend/middleware/auth.py"
+      - "templates/backend/requirements.txt"
+      - "templates/backend/.env.template"
+
+    deployment:
+      - "templates/deployment/RENDER_DEPLOYMENT_GUIDE.md"
+      - "templates/deployment/VERCEL_DEPLOYMENT_GUIDE.md"
+      - "templates/deployment/NEON_SETUP_GUIDE.md"
+      - "templates/deployment/DEPLOYMENT_CHECKLIST.md"
+
+    documentation:
+      - "templates/README.md"
+      - "templates/CLAUDE.md"
+      - "templates/ARCHITECTURE.md"
+      - "templates/API_DOCUMENTATION.md"
+      - "templates/DEPLOYMENT.md"
+
+# Metadata
+metadata:
+  created: 2025-12-14
+  last_updated: 2025-12-14
+  version_history:
+    - version: 2.0.0
+      date: 2025-12-14
+      notes: "Phase 2 complete implementation with full-stack architecture"
+
+  related_skills:
+    - taskpilot-blueprint  # Phase 1
+    - render-deployment
+    - vercel-deployment
+
+  integrations:
+    - "Claude Code"
+    - "Next.js"
+    - "FastAPI"
+    - "Neon PostgreSQL"
+    - "Vercel"
+    - "Render"
+    - "GitHub Actions"
+
+# Status
+status: active
+stability: stable
+maturity: production
+
+# Technology stack versions
+technology_versions:
+  frontend:
+    nextjs: "16.0.0"
+    react: "19.0.0"
+    typescript: "5.6.0"
+    tailwindcss: "3.4.0"
+    better-auth: "1.4.5"
+
+  backend:
+    python: "3.13+"
+    fastapi: "0.109.0+"
+    uvicorn: "0.27.0+"
+    gunicorn: "21.2.0+"
+    sqlmodel: "0.0.14+"
+    python-jose: "3.3.0+"
+    passlib: "1.7.4+"
+
+  database:
+    postgresql: "15+"
+    sqlalchemy: "2.0.23+"
+
+# Keywords for discovery
+keywords:
+  - taskpilot
+  - phase-2
+  - fullstack
+  - nextjs
+  - fastapi
+  - react
+  - typescript
+  - postgresql
+  - neon
+  - vercel
+  - render
+  - jwt
+  - authentication
+  - multi-user
+  - web-app
+  - production
+  - deployment
+  - saas
+  - blueprint

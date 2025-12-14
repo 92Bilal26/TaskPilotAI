@@ -1,0 +1,575 @@
+{
+  "manifest_version": "2.0",
+  "skill_name": "taskpilot-phase2-blueprint",
+  "display_name": "TaskPilot Phase 2 - Full-Stack Web App Generator",
+  "version": "2.0.0",
+  "description": "Generate production-ready full-stack web applications with Next.js, FastAPI, PostgreSQL, and automated deployment to Vercel + Render",
+
+  "metadata": {
+    "author": "TaskPilotAI Team",
+    "license": "MIT",
+    "repository": "https://github.com/92Bilal26/TaskPilotAI",
+    "homepage": "https://github.com/92Bilal26/TaskPilotAI",
+    "icon": "🚀",
+    "keywords": ["fullstack", "nextjs", "fastapi", "react", "postgresql", "web-app", "deployment"],
+    "categories": ["full-stack-generation", "web-application", "deployment"],
+    "created_at": "2025-12-14",
+    "updated_at": "2025-12-14",
+    "phase": 2
+  },
+
+  "architecture": {
+    "type": "full-stack-web-application",
+    "pattern": "client-server",
+    "deployment": "multi-cloud",
+
+    "frontend": {
+      "framework": "Next.js 16",
+      "language": "TypeScript 5.6",
+      "ui_library": "React 19",
+      "styling": "Tailwind CSS 3.4",
+      "authentication": "Better Auth SDK 1.4.5",
+      "api_client": "Custom ApiClient class",
+      "routing": "App Router",
+      "deployment_platform": "Vercel",
+      "build_time": "2-3 minutes",
+      "auto_deploy": true
+    },
+
+    "backend": {
+      "framework": "FastAPI 0.109+",
+      "language": "Python 3.13+",
+      "database_orm": "SQLModel 0.0.14+",
+      "authentication": "JWT (python-jose 3.3+)",
+      "password_hashing": "bcrypt (passlib 1.7+)",
+      "asgi_server": "uvicorn + gunicorn",
+      "validation": "Pydantic 2.7+",
+      "deployment_platform": "Render",
+      "deployment_time": "3-5 minutes",
+      "auto_deploy": true
+    },
+
+    "database": {
+      "type": "PostgreSQL 15+",
+      "provider": "Neon (serverless)",
+      "orm": "SQLModel",
+      "migrations": "Alembic",
+      "connection_pooling": true,
+      "ssl_required": true,
+      "tables": ["user", "task"]
+    },
+
+    "infrastructure": {
+      "frontend_host": "Vercel",
+      "backend_host": "Render",
+      "database_host": "Neon",
+      "cicd": "GitHub Actions",
+      "version_control": "GitHub",
+      "auto_deploy_on_push": true
+    }
+  },
+
+  "capabilities": {
+    "fullstack_project_scaffolding": {
+      "description": "Generate complete frontend + backend project structure",
+      "supported": true
+    },
+    "frontend_generation": {
+      "description": "Generate Next.js application with TypeScript",
+      "supported": true,
+      "technologies": ["Next.js 16", "React 19", "TypeScript", "Tailwind CSS"]
+    },
+    "backend_api_generation": {
+      "description": "Generate FastAPI backend with JWT authentication",
+      "supported": true,
+      "technologies": ["FastAPI", "SQLModel", "JWT", "Bcrypt"]
+    },
+    "database_schema_generation": {
+      "description": "Generate PostgreSQL schema with SQLModel",
+      "supported": true,
+      "tables": 2,
+      "relationships": ["One-to-Many User→Task"]
+    },
+    "authentication_system": {
+      "description": "Complete multi-user authentication with JWT",
+      "supported": true,
+      "features": ["Signup", "Signin", "Token Refresh", "Password Hashing"]
+    },
+    "deployment_automation": {
+      "description": "Automated deployment to Vercel + Render",
+      "supported": true,
+      "platforms": ["Vercel", "Render", "Neon"]
+    },
+    "api_documentation": {
+      "description": "Auto-generated API documentation",
+      "supported": true,
+      "format": "OpenAPI (Swagger)"
+    },
+    "test_generation": {
+      "description": "Comprehensive test suites",
+      "supported": true,
+      "frameworks": ["Jest", "pytest"]
+    }
+  },
+
+  "subagents": {
+    "spec-generator": {
+      "description": "Generates specifications and architecture docs",
+      "model": "sonnet",
+      "tools": ["Read", "Write", "Glob", "Grep"],
+      "priority": "high",
+      "responsibilities": [
+        "Create feature specifications",
+        "Generate API contracts",
+        "Document database schema",
+        "Create deployment plans"
+      ]
+    },
+    "frontend-generator": {
+      "description": "Generates Next.js frontend application",
+      "model": "sonnet",
+      "tools": ["Write", "Edit", "Bash", "Read"],
+      "priority": "high",
+      "responsibilities": [
+        "Scaffold Next.js project",
+        "Generate React components",
+        "Create API client",
+        "Set up authentication",
+        "Configure Tailwind CSS"
+      ]
+    },
+    "backend-generator": {
+      "description": "Generates FastAPI backend application",
+      "model": "sonnet",
+      "tools": ["Write", "Edit", "Bash", "Read"],
+      "priority": "high",
+      "responsibilities": [
+        "Scaffold FastAPI project",
+        "Generate API endpoints",
+        "Create SQLModel models",
+        "Implement JWT authentication",
+        "Set up middleware"
+      ]
+    },
+    "database-generator": {
+      "description": "Generates database schema and migrations",
+      "model": "haiku",
+      "tools": ["Write", "Edit", "Bash"],
+      "priority": "high",
+      "responsibilities": [
+        "Create SQLModel models",
+        "Generate Alembic migrations",
+        "Set up database connection",
+        "Configure connection pooling"
+      ]
+    },
+    "deployment-configurator": {
+      "description": "Configures deployment for all platforms",
+      "model": "sonnet",
+      "tools": ["Write", "Read", "Bash"],
+      "priority": "high",
+      "responsibilities": [
+        "Configure Vercel deployment",
+        "Configure Render deployment",
+        "Set up environment variables",
+        "Create deployment guides"
+      ]
+    },
+    "test-generator": {
+      "description": "Generates comprehensive test suites",
+      "model": "haiku",
+      "tools": ["Write", "Edit", "Bash"],
+      "priority": "medium",
+      "responsibilities": [
+        "Generate frontend tests (Jest)",
+        "Generate backend tests (pytest)",
+        "Create integration tests",
+        "Set up test fixtures"
+      ]
+    },
+    "documentation-generator": {
+      "description": "Generates project documentation",
+      "model": "haiku",
+      "tools": ["Write", "Read"],
+      "priority": "medium",
+      "responsibilities": [
+        "Create README files",
+        "Generate API documentation",
+        "Create deployment guides",
+        "Document architecture"
+      ]
+    }
+  },
+
+  "parameters": {
+    "required": [
+      "app_name"
+    ],
+    "optional": [
+      "description",
+      "features",
+      "database_provider",
+      "frontend_deployment",
+      "backend_deployment",
+      "include_analytics",
+      "include_admin_panel",
+      "tailwind_ui",
+      "initialize_git"
+    ],
+    "defaults": {
+      "description": "A full-stack task management web application",
+      "features": [],
+      "database_provider": "neon",
+      "frontend_deployment": "vercel",
+      "backend_deployment": "render",
+      "include_analytics": false,
+      "include_admin_panel": false,
+      "tailwind_ui": true,
+      "initialize_git": true
+    }
+  },
+
+  "output_specification": {
+    "structure": {
+      "root": "{app_name}/",
+      "frontend_directory": "frontend/",
+      "backend_directory": "backend/",
+      "specs_directory": "specs/",
+      "docs_directory": "docs/"
+    },
+    "expected_files": {
+      "frontend_files": 30,
+      "backend_files": 20,
+      "spec_files": 10,
+      "documentation_files": 15,
+      "configuration_files": 10,
+      "test_files": 25,
+      "total": 110
+    },
+    "expected_metrics": {
+      "total_lines": 20000,
+      "frontend_lines": 8000,
+      "backend_lines": 5000,
+      "test_lines": 4000,
+      "documentation_lines": 3000,
+      "api_endpoints": 10,
+      "database_tables": 2,
+      "react_components": 10,
+      "frontend_test_coverage": 85,
+      "backend_test_coverage": 95
+    },
+    "quality_gates": [
+      "Frontend build succeeds",
+      "Backend tests: 95%+ coverage",
+      "Frontend tests: 85%+ coverage",
+      "TypeScript: 0 type errors",
+      "mypy: 0 type errors (strict mode)",
+      "All API endpoints functional",
+      "Database schema created",
+      "Authentication working",
+      "User isolation enforced",
+      "Deployment guides complete"
+    ]
+  },
+
+  "api_endpoints": {
+    "authentication": [
+      {
+        "method": "POST",
+        "path": "/auth/signup",
+        "description": "Create new user account",
+        "auth_required": false
+      },
+      {
+        "method": "POST",
+        "path": "/auth/signin",
+        "description": "Login with credentials",
+        "auth_required": false
+      },
+      {
+        "method": "POST",
+        "path": "/auth/refresh",
+        "description": "Refresh access token",
+        "auth_required": true
+      }
+    ],
+    "tasks": [
+      {
+        "method": "GET",
+        "path": "/tasks",
+        "description": "List user's tasks",
+        "auth_required": true
+      },
+      {
+        "method": "POST",
+        "path": "/tasks",
+        "description": "Create new task",
+        "auth_required": true
+      },
+      {
+        "method": "GET",
+        "path": "/tasks/{id}",
+        "description": "Get specific task",
+        "auth_required": true
+      },
+      {
+        "method": "PUT",
+        "path": "/tasks/{id}",
+        "description": "Update task",
+        "auth_required": true
+      },
+      {
+        "method": "DELETE",
+        "path": "/tasks/{id}",
+        "description": "Delete task",
+        "auth_required": true
+      },
+      {
+        "method": "PATCH",
+        "path": "/tasks/{id}/complete",
+        "description": "Toggle task completion",
+        "auth_required": true
+      }
+    ],
+    "health": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "description": "Health check endpoint",
+        "auth_required": false
+      }
+    ]
+  },
+
+  "database_schema": {
+    "tables": {
+      "user": {
+        "primary_key": "id",
+        "fields": {
+          "id": "UUID",
+          "email": "String (unique, indexed)",
+          "name": "String",
+          "password_hash": "String",
+          "emailVerified": "Boolean",
+          "createdAt": "DateTime",
+          "updatedAt": "DateTime"
+        },
+        "relationships": {
+          "tasks": "One-to-Many → task (cascade delete)"
+        },
+        "indexes": ["email"]
+      },
+      "task": {
+        "primary_key": "id",
+        "fields": {
+          "id": "UUID",
+          "user_id": "UUID (foreign key)",
+          "title": "String",
+          "description": "String (nullable)",
+          "completed": "Boolean (default: false)",
+          "created_at": "DateTime (indexed)",
+          "updated_at": "DateTime"
+        },
+        "relationships": {
+          "user": "Many-to-One → user"
+        },
+        "indexes": ["user_id", "created_at"]
+      }
+    }
+  },
+
+  "deployment_workflow": {
+    "total_time_minutes": 45,
+    "steps": [
+      {
+        "step": 1,
+        "name": "Database Setup",
+        "platform": "Neon",
+        "duration_minutes": 5,
+        "actions": [
+          "Create Neon account",
+          "Create PostgreSQL database",
+          "Get connection string"
+        ]
+      },
+      {
+        "step": 2,
+        "name": "Backend Deployment",
+        "platform": "Render",
+        "duration_minutes": 15,
+        "actions": [
+          "Create Render account",
+          "Connect GitHub repository",
+          "Configure web service",
+          "Set environment variables",
+          "Deploy backend"
+        ]
+      },
+      {
+        "step": 3,
+        "name": "Frontend Deployment",
+        "platform": "Vercel",
+        "duration_minutes": 10,
+        "actions": [
+          "Create Vercel account",
+          "Import GitHub repository",
+          "Set environment variables",
+          "Deploy frontend"
+        ]
+      },
+      {
+        "step": 4,
+        "name": "Integration Testing",
+        "platform": "Local/Cloud",
+        "duration_minutes": 10,
+        "actions": [
+          "Test signup/signin flow",
+          "Test task CRUD operations",
+          "Verify user isolation",
+          "Check deployment health"
+        ]
+      },
+      {
+        "step": 5,
+        "name": "Documentation",
+        "platform": "Local",
+        "duration_minutes": 5,
+        "actions": [
+          "Review generated docs",
+          "Verify deployment guides",
+          "Check API documentation"
+        ]
+      }
+    ]
+  },
+
+  "execution": {
+    "estimated_time_minutes": 45,
+    "estimated_time_range": "30-60",
+    "cost_estimate": "high",
+    "parallelizable": true,
+    "requires_internet": true,
+    "requires_accounts": ["github", "vercel", "render", "neon"],
+    "disk_space_required_mb": 200,
+    "memory_required_mb": 1024
+  },
+
+  "technology_stack": {
+    "frontend": {
+      "runtime": "Node.js 20+",
+      "framework": "Next.js 16.0.0",
+      "ui_library": "React 19.0.0",
+      "language": "TypeScript 5.6.0",
+      "styling": "Tailwind CSS 3.4.0",
+      "auth_sdk": "Better Auth 1.4.5"
+    },
+    "backend": {
+      "runtime": "Python 3.13+",
+      "framework": "FastAPI 0.109.0+",
+      "orm": "SQLModel 0.0.14+",
+      "authentication": "python-jose 3.3.0+",
+      "password_hashing": "passlib 1.7.4+",
+      "server": "gunicorn 21.2.0+ + uvicorn 0.27.0+"
+    },
+    "database": {
+      "type": "PostgreSQL 15+",
+      "provider": "Neon",
+      "orm": "SQLModel",
+      "migrations": "Alembic"
+    }
+  },
+
+  "use_cases": [
+    "Full-stack SaaS application development",
+    "Multi-user web applications",
+    "Hackathon full-stack projects (150 points)",
+    "Portfolio projects with deployment",
+    "Learning full-stack development",
+    "Production-ready task management systems",
+    "Rapid prototyping with authentication"
+  ],
+
+  "files": {
+    "skill_definition": "skill-definition.yaml",
+    "manifest": "manifest.json",
+    "readme": "README.md",
+    "subagents": "SUBAGENTS.md",
+    "implementation_guide": "IMPLEMENTATION_GUIDE.md",
+    "deployment_guide": "DEPLOYMENT.md"
+  },
+
+  "compatibility": {
+    "platforms": [
+      "claude-code",
+      "claude-api",
+      "claude-sdk"
+    ],
+    "operating_systems": [
+      "linux",
+      "macos",
+      "windows-wsl2"
+    ],
+    "node_versions": ["18+", "20+", "22+"],
+    "python_versions": ["3.13+", "3.12+", "3.11+"]
+  },
+
+  "phase_comparison": {
+    "phase_1": {
+      "type": "CLI Application",
+      "storage": "In-memory",
+      "users": "Single user",
+      "ui": "Terminal (CLI + TUI)",
+      "deployment": "Local only",
+      "lines_of_code": 8400,
+      "tests": 84,
+      "duration": "10-30 minutes"
+    },
+    "phase_2": {
+      "type": "Full-Stack Web App",
+      "storage": "PostgreSQL",
+      "users": "Multi-user",
+      "ui": "Web (React)",
+      "deployment": "Cloud (Vercel + Render)",
+      "lines_of_code": 20000,
+      "tests": 150,
+      "duration": "30-60 minutes"
+    }
+  },
+
+  "limitations": [
+    "Next.js + FastAPI stack only (not Vue, Django, etc.)",
+    "PostgreSQL only (not MySQL, MongoDB)",
+    "JWT authentication only (not OAuth, session-based)",
+    "Vercel + Render deployment (configurable)",
+    "Requires external service accounts (Vercel, Render, Neon)"
+  ],
+
+  "support": {
+    "documentation_url": "https://github.com/92Bilal26/TaskPilotAI/tree/phase-2",
+    "issues_url": "https://github.com/92Bilal26/TaskPilotAI/issues",
+    "email": "support@taskpilotai.dev"
+  },
+
+  "validation": {
+    "enabled": true,
+    "checks": [
+      "project_structure",
+      "frontend_build_succeeds",
+      "backend_tests_pass",
+      "database_schema_created",
+      "api_endpoints_functional",
+      "authentication_working",
+      "user_isolation_enforced",
+      "deployment_guides_complete",
+      "documentation_complete"
+    ]
+  },
+
+  "status": {
+    "current": "active",
+    "stability": "stable",
+    "maturity": "production",
+    "maintenance_status": "actively-maintained",
+    "phase": 2
+  }
+}
