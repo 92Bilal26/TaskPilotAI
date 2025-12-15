@@ -14,8 +14,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="TaskPilotAI",
-    description="Full-stack task management application",
-    version="2.0.0",
+    description="Full-stack task management application with AI Chatbot",
+    version="3.0.0",
     lifespan=lifespan
 )
 
@@ -33,6 +33,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(tasks.router)
+# Chat route will be added in Phase 2 (T028)
 
 @app.get("/health")
 async def health_check():
