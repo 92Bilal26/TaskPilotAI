@@ -1,17 +1,19 @@
 """Chat API Endpoints
 
 Handles chat messages and conversation management for the chatbot.
+Includes multi-turn conversation support and context management.
 """
 
 import logging
 from typing import Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Request, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlmodel import Session, select
 from datetime import datetime
 from db import get_session
 from models import Conversation, Message
 from agents.task_agent import TaskAgent
+from agents.conversation_context import get_conversation_context
 from mcp.server import initialize_mcp_server
 
 logger = logging.getLogger(__name__)
@@ -21,7 +23,7 @@ router = APIRouter(prefix="/api", tags=["chat"])
 
 class ChatMessage(BaseModel):
     """User chat message"""
-    content: str
+    content: str = Field(..., min_length=1, max_length=5000)
     conversation_id: Optional[int] = None
 
 
@@ -98,17 +100,18 @@ async def chat(
         session.refresh(user_msg)
         logger.info(f"Stored user message {user_msg.id}")
 
-        # Get conversation history
-        history_query = select(Message).where(
-            Message.conversation_id == conversation.id
-        ).order_by(Message.created_at)
-        history_messages = session.exec(history_query).all()
+        # Load conversation context
+        conv_context = get_conversation_context(
+            conversation_id=conversation.id,
+            user_id=user_id,
+        )
 
-        # Build conversation history for agent
-        conversation_history = [
-            {"role": msg.role, "content": msg.content}
-            for msg in history_messages[:-1]  # Exclude current message
-        ]
+        # Get conversation history (excluding current message)
+        conversation_history = conv_context.get_context(max_messages=10)
+
+        logger.info(
+            f"Loaded conversation context with {len(conversation_history)} previous messages"
+        )
 
         # Initialize agent with MCP server
         mcp_server = initialize_mcp_server()
@@ -118,12 +121,30 @@ async def chat(
         for tool_name, tool_func in mcp_server.get_tools().items():
             agent.register_tool(tool_name, tool_func)
 
+        logger.info(f"Agent initialized with {len(agent.get_available_tools())} tools")
+
         # Process message with agent
-        agent_response = await agent.process_message(
-            user_id=user_id,
-            message=message.content,
-            conversation_history=conversation_history,
-        )
+        try:
+            agent_response = await agent.process_message(
+                user_id=user_id,
+                message=message.content,
+                conversation_history=conversation_history,
+            )
+
+            # Add assistant response to context
+            conv_context.add_message(
+                role="assistant",
+                content=agent_response.get("response", ""),
+                tool_calls=agent_response.get("tool_calls"),
+            )
+
+        except Exception as e:
+            logger.error(f"Agent processing failed: {e}")
+            agent_response = {
+                "response": f"I encountered an issue processing your request. Please try again.",
+                "tool_calls": [],
+                "status": "error",
+            }
 
         # Store assistant message with tool calls
         assistant_msg = Message(
