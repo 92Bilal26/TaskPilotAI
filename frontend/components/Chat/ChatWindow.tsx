@@ -55,10 +55,13 @@ export function ChatWindow({
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
 
+    // Capture the input value before clearing
+    const messageContent = inputValue
+
     const userMessage: Message = {
       id: `msg-${Date.now()}`,
       role: 'user',
-      content: inputValue,
+      content: messageContent,
       created_at: new Date().toISOString(),
     }
 
@@ -74,7 +77,7 @@ export function ChatWindow({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          content: inputValue,
+          content: messageContent,
           conversation_id: conversationId_state,
         }),
       })
