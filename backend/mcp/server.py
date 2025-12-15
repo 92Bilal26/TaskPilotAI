@@ -5,14 +5,7 @@ This module sets up the Model Context Protocol server and registers all task man
 
 from typing import Any
 import logging
-
-# MCP tool registration happens here
-# Tools will be registered as they are implemented:
-# - add_task
-# - list_tasks
-# - complete_task
-# - delete_task
-# - update_task
+from mcp.tools import add_task
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +40,9 @@ def initialize_mcp_server() -> MCPServer:
     """
     logger.info("Initializing MCP server with all tools")
 
-    # Tools will be registered here as they are implemented
-    # This is a placeholder for Phase 2 implementation
+    # Register task management tools
+    mcp_server.register_tool("add_task", add_task)
+
+    logger.info(f"Registered tools: {list(mcp_server.get_tools().keys())}")
 
     return mcp_server

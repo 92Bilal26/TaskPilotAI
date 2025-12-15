@@ -73,10 +73,49 @@ class TaskAgent:
             - tool_calls: List of tools that were invoked
             - status: 'success' or 'error'
         """
-        # This will be implemented in Phase 3
-        # For now, return placeholder response
+        logger.info(f"Processing message from user {user_id}: {message}")
+
+        try:
+            # Build conversation history for context
+            messages = conversation_history or []
+            messages.append({"role": "user", "content": message})
+
+            # Call OpenAI with tools
+            response = self._call_openai_with_tools(
+                user_id=user_id,
+                messages=messages,
+            )
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Error processing message: {e}")
+            return {
+                "response": f"I encountered an error: {str(e)}",
+                "tool_calls": [],
+                "status": "error",
+            }
+
+    def _call_openai_with_tools(
+        self,
+        user_id: str,
+        messages: list[dict[str, str]],
+    ) -> dict[str, Any]:
+        """Call OpenAI API with available tools
+
+        Args:
+            user_id: User ID for context
+            messages: Conversation history
+
+        Returns:
+            Response with tool calls and assistant message
+        """
+        logger.info(f"Calling OpenAI API with {len(self.tools)} tools")
+
+        # Placeholder: This would call OpenAI API
+        # For now, return a simple response
         return {
-            "response": "Message processing will be implemented in Phase 3",
+            "response": "I received your message and can help you with task management",
             "tool_calls": [],
             "status": "pending",
         }

@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from config import settings
 from db import create_db_and_tables
-from routes import auth, tasks
+from routes import auth, tasks, chat
 from middleware.auth import JWTAuthMiddleware
 
 @asynccontextmanager
@@ -33,7 +33,7 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(tasks.router)
-# Chat route will be added in Phase 2 (T028)
+app.include_router(chat.router)
 
 @app.get("/health")
 async def health_check():

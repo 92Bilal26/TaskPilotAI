@@ -7,3 +7,7 @@ This module contains all MCP tools:
 - delete_task: Permanently remove a task
 - update_task: Modify task title and/or description
 """
+
+from .add_task import add_task
+
+__all__ = ["add_task"]
