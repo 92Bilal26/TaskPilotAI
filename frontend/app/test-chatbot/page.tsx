@@ -11,9 +11,12 @@ import { useState } from 'react'
 import { ChatWindow } from '@/components/Chat/ChatWindow'
 
 export default function TestChatbotPage() {
-  // Test user ID - can be changed
-  const testUserId = 'test-user-' + Math.random().toString(36).substring(7)
-  const testToken = 'test-token-' + Math.random().toString(36).substring(7)
+  // Test user ID - consistent for testing
+  const testUserId = 'test-user-demo'
+  // For development, we use a test token in format: test-token-{user_id}
+  // Backend will extract the user_id from this token when in development mode
+  // In production, this would be a real JWT token
+  const testToken = 'test-token-test-user-demo'
 
   return (
     <div className="h-screen flex flex-col">

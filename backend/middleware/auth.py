@@ -11,23 +11,31 @@ class JWTAuthMiddleware(BaseHTTPMiddleware):
         public_paths = ["/auth/", "/health", "/docs", "/openapi.json", "/redoc"]
         if request.method == "OPTIONS" or any(request.url.path.startswith(path) for path in public_paths):
             return await call_next(request)
-        
+
         auth_header = request.headers.get("Authorization")
         if not auth_header:
             return JSONResponse({"detail": "Missing authorization header"}, status_code=401)
-        
+
         try:
             scheme, token = auth_header.split()
             if scheme.lower() != "bearer":
                 return JSONResponse({"detail": "Invalid auth scheme"}, status_code=401)
-            
+
+            # Development: Allow test tokens for easy testing
+            if settings.ENVIRONMENT == "development" and token.startswith("test-token-"):
+                # Extract user ID from test token (format: test-token-{user_id})
+                user_id = token.replace("test-token-", "")
+                request.state.user_id = user_id
+                return await call_next(request)
+
+            # Production: Validate JWT token
             payload = jwt.decode(token, settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
             user_id = payload.get("user_id")
             if not user_id:
                 return JSONResponse({"detail": "Invalid token"}, status_code=401)
-            
+
             request.state.user_id = user_id
         except Exception as e:
             return JSONResponse({"detail": str(e)}, status_code=401)
-        
+
         return await call_next(request)
