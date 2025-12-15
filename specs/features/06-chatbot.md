@@ -128,10 +128,11 @@ As a user learning the chatbot, I want helpful error messages and the ability to
 
 - What happens when user mentions multiple tasks in one message? (System should handle single-task operations and ask for clarification if ambiguous)
 - How does system handle task names with special characters? (Should accept and store as-is)
-- What if conversation has 100+ messages? (Should maintain performance and context window limits)
+- What if conversation has 100+ messages? (Automatically summarize messages older than 20 messages into brief summary; maintain conversation coherence with message pagination)
 - What if user tries to access another user's task? (System must prevent cross-user access and respond appropriately)
 - What if OpenAI API is down? (Chatbot should gracefully inform user and suggest retry)
-- What if database connection fails during task operation? (MCP tool should return error and chatbot should inform user)
+- What if database connection fails during task operation? (MCP tool should auto-retry once; if still fails, inform user with recovery suggestion)
+- What if user edits same task from multiple browser tabs simultaneously? (Last-write-wins: later edit silently overwrites earlier; frontend shows optimistic update)
 
 ---
 
@@ -151,7 +152,7 @@ As a user learning the chatbot, I want helpful error messages and the ability to
 - **FR-010**: System MUST stream responses from agent in real-time to ChatKit UI
 - **FR-011**: ChatKit MUST visualize tool invocations showing which tools were called and results
 - **FR-012**: System MUST validate task titles (1-200 chars) and descriptions (max 1000 chars) at MCP tool level
-- **FR-013**: System MUST handle errors gracefully: tool failures, API errors, validation errors
+- **FR-013**: System MUST handle errors gracefully: tool failures (auto-retry once), API errors (inform user with recovery options), validation errors (clear messages)
 - **FR-014**: Frontend MUST use @openai/chatkit-react for chat UI (no custom chat components)
 - **FR-015**: Backend MUST use Official MCP SDK for tool definitions (no custom tool framework)
 - **FR-016**: Backend MUST use OpenAI Agents SDK for agent orchestration (no manual tool invocation)
@@ -183,6 +184,9 @@ As a user learning the chatbot, I want helpful error messages and the ability to
 - **SC-012**: Code coverage for backend MCP tools is ≥95%
 - **SC-013**: Code coverage for chat endpoint is ≥90%
 - **SC-014**: Frontend ChatKit integration has ≥90% component test coverage
+- **SC-015**: Conversation history summarizes messages after 20-message threshold; context maintained without data loss
+- **SC-016**: Concurrent edits from same user result in last-write-wins with no user notification (silent overwrite acceptable)
+- **SC-017**: Tool failures trigger automatic retry; user is informed only if retry also fails (max 1 retry)
 
 ---
 
@@ -323,9 +327,13 @@ As a user learning the chatbot, I want helpful error messages and the ability to
 
 ---
 
-## Questions for Clarification
+## Clarifications
 
-None currently - specification is complete based on hackathon requirements and reference documentation.
+### Session 2025-12-15
+
+- Q: Context window limits for conversations with 100+ messages? → A: Automatically summarize messages older than 20 messages and replace with brief summary
+- Q: Concurrent edit conflict resolution for same user editing from multiple tabs? → A: Last-write-wins with optimistic updates (silent overwrite)
+- Q: Agent error recovery for failed MCP tool invocations? → A: Auto-retry failed tools once; if still fails, inform user with recovery suggestion
 
 ---
 
