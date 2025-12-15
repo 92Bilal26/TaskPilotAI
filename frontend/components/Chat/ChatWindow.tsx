@@ -1,10 +1,11 @@
 'use client'
 
 /**
- * ChatWindow Component - ChatKit Integration
+ * ChatWindow Component - Custom Chat Interface
  *
- * Wraps OpenAI's ChatKit React component for the chatbot interface.
- * Handles message sending, conversation management, and error handling.
+ * Custom-built chat interface for TaskPilot AI chatbot.
+ * Handles message display, sending, conversation management, and error handling.
+ * Not using OpenAI's ChatKit - built with custom React components instead.
  */
 
 import { useEffect, useState, useRef } from 'react'
