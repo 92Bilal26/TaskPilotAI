@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     JWT_EXPIRY_SECONDS: int = 604800
     JWT_REFRESH_EXPIRY_SECONDS: int = 1209600
     BETTER_AUTH_SECRET: str = "dev-secret-key"
+    OPENAI_API_KEY: str = "sk-test-key"  # Required for OpenAI integration
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:8000",

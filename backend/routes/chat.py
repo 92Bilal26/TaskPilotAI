@@ -113,11 +113,18 @@ async def chat(
             f"Loaded conversation context with {len(conversation_history)} previous messages"
         )
 
-        # Initialize agent with MCP server
-        mcp_server = initialize_mcp_server()
-        agent = TaskAgent(api_key="placeholder")
+        # Initialize agent with OpenAI API
+        try:
+            agent = TaskAgent()  # Uses OPENAI_API_KEY from config
+        except ValueError as e:
+            logger.error(f"Failed to initialize agent: {e}")
+            raise HTTPException(
+                status_code=500,
+                detail="Agent initialization failed. Check OpenAI API key configuration.",
+            )
 
-        # Register tools with agent
+        # Initialize MCP server and register tools with agent
+        mcp_server = initialize_mcp_server()
         for tool_name, tool_func in mcp_server.get_tools().items():
             agent.register_tool(tool_name, tool_func)
 
