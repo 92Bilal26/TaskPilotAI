@@ -1,34 +1,38 @@
-# TaskPilotAI - Phase 2
+# TaskPilotAI - Phase 3 🤖
 
-**The Evolution of Todo: Full-Stack Web Application**
+**The Evolution of Todo: AI-Powered Chatbot with OpenAI Integration**
 
-Hackathon II Phase 2 (Due: Dec 14, 2025) - 150 Points
+Hackathon II Phase 3 (Status: ✅ COMPLETE) - Natural Language Task Management
 
-A spec-driven, full-stack multi-user todo application built with Next.js, FastAPI, and PostgreSQL, deployed on Vercel and Render.
+A spec-driven, full-stack AI-powered todo chatbot built with Next.js, FastAPI, PostgreSQL, and OpenAI API for autonomous task management through natural language.
 
 ---
 
 ## ✨ Features
 
-Phase 2 implements full-stack web application with authentication and multi-user support:
+Phase 3 extends Phase 2 with AI-powered chatbot capabilities for natural language task management:
 
-### Frontend Features
-1. **User Authentication** – Signup and login with Better Auth
-2. **Task Dashboard** – Beautiful, responsive task management UI
-3. **Create Tasks** – Add new tasks with title and description
-4. **Edit Tasks** – Modify existing task details in modal dialog
-5. **Delete Tasks** – Remove tasks with confirmation
-6. **Mark as Complete** – Toggle task completion status with checkbox
-7. **Search & Filter** – Filter tasks by status (all, pending, completed)
-8. **Real-time Sync** – Auto-refresh task lists after operations
+### Phase 2 Foundation Features (Preserved)
+- ✅ User Authentication (Signup/Login with Better Auth)
+- ✅ Task Dashboard with full CRUD operations
+- ✅ Multi-user Support with complete isolation
+- ✅ PostgreSQL persistence with SQLModel ORM
+- ✅ JWT Authentication and CORS support
 
-### Backend Features
-1. **REST API** – 10+ endpoints for complete task CRUD operations
-2. **JWT Authentication** – Secure token-based authentication
-3. **Multi-user Support** – Complete user isolation and privacy
-4. **Database Persistence** – PostgreSQL with SQLModel ORM
-5. **Error Handling** – Comprehensive error responses and validation
-6. **CORS Support** – Configured for Vercel frontend deployment
+### Phase 3 AI Features (NEW) 🤖
+1. **Natural Language Processing** – Understand user intent through OpenAI GPT-4 Turbo
+2. **Autonomous Tool Selection** – OpenAI automatically selects correct tool based on user message
+3. **Chat Interface** – Real-time chat-based task management
+4. **Multi-turn Conversations** – Context-aware conversations with history (last 20 messages)
+5. **5 MCP Tools** – Autonomous execution of:
+   - `add_task` – Create tasks from natural language
+   - `list_tasks` – Query tasks with optional filtering
+   - `complete_task` – Toggle task completion status
+   - `update_task` – Modify task details
+   - `delete_task` – Remove tasks
+6. **Conversation Management** – Store and retrieve full conversation histories
+7. **OpenAI Integration** – Real API calls to gpt-4-turbo-preview model
+8. **Error Handling** – Graceful error recovery with informative messages
 
 ---
 
