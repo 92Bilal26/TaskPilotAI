@@ -1,0 +1,405 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Phase 3 Conversation and Message Models",
+  "description": "JSON Schema definitions for Conversation and Message entities in Phase 3",
+  "definitions": {
+    "conversation": {
+      "type": "object",
+      "title": "Conversation",
+      "description": "A chat session between user and chatbot",
+      "required": [
+        "id",
+        "user_id",
+        "created_at",
+        "updated_at",
+        "archived"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique conversation ID (auto-increment)",
+          "minimum": 1,
+          "example": 123
+        },
+        "user_id": {
+          "type": "string",
+          "description": "UUID of conversation owner (from JWT token)",
+          "format": "uuid",
+          "example": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional conversation title",
+          "maxLength": 200,
+          "example": "Task Planning Session"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Conversation creation timestamp (ISO 8601, UTC)",
+          "format": "date-time",
+          "example": "2025-12-15T14:30:00Z"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "Last message timestamp (ISO 8601, UTC)",
+          "format": "date-time",
+          "example": "2025-12-15T14:35:00Z"
+        },
+        "archived": {
+          "type": "boolean",
+          "description": "Whether conversation is archived (soft delete)",
+          "default": false,
+          "example": false
+        },
+        "message_count": {
+          "type": "integer",
+          "description": "Total messages in conversation (read-only)",
+          "minimum": 0,
+          "example": 15
+        }
+      },
+      "additionalProperties": false
+    },
+    "message": {
+      "type": "object",
+      "title": "Message",
+      "description": "Individual message in a conversation",
+      "required": [
+        "id",
+        "conversation_id",
+        "user_id",
+        "role",
+        "content",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique message ID (auto-increment)",
+          "minimum": 1,
+          "example": 1
+        },
+        "conversation_id": {
+          "type": "integer",
+          "description": "Parent conversation ID",
+          "minimum": 1,
+          "example": 123
+        },
+        "user_id": {
+          "type": "string",
+          "description": "Message author user ID (copy from conversation for isolation)",
+          "format": "uuid",
+          "example": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "role": {
+          "type": "string",
+          "description": "Who sent the message",
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "example": "user"
+        },
+        "content": {
+          "type": "string",
+          "description": "Message text content",
+          "minLength": 1,
+          "maxLength": 10000,
+          "example": "Add a task to buy groceries tomorrow"
+        },
+        "tool_calls": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "description": "Array of MCP tool invocations (for assistant messages only)",
+          "items": {
+            "$ref": "#/definitions/toolCall"
+          },
+          "example": [
+            {
+              "tool": "add_task",
+              "status": "success",
+              "parameters": {
+                "title": "Buy groceries",
+                "description": "tomorrow"
+              },
+              "result": {
+                "task_id": 42,
+                "status": "created"
+              }
+            }
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Message creation timestamp (ISO 8601, UTC)",
+          "format": "date-time",
+          "example": "2025-12-15T14:30:00Z"
+        }
+      },
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "role": {
+                "const": "assistant"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "tool_calls": {
+                "type": "array",
+                "minItems": 0,
+                "description": "Assistant messages may include tool calls"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "toolCall": {
+      "type": "object",
+      "title": "Tool Call",
+      "description": "Record of MCP tool invocation and result",
+      "required": [
+        "tool",
+        "status"
+      ],
+      "properties": {
+        "tool": {
+          "type": "string",
+          "description": "MCP tool name",
+          "enum": [
+            "add_task",
+            "list_tasks",
+            "complete_task",
+            "delete_task",
+            "update_task"
+          ],
+          "example": "add_task"
+        },
+        "status": {
+          "type": "string",
+          "description": "Tool execution status",
+          "enum": [
+            "success",
+            "error"
+          ],
+          "example": "success"
+        },
+        "parameters": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Input parameters passed to tool",
+          "additionalProperties": true,
+          "example": {
+            "title": "Buy groceries",
+            "description": "tomorrow"
+          }
+        },
+        "result": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Output result from tool (null if error)",
+          "additionalProperties": true,
+          "example": {
+            "task_id": 42,
+            "status": "created"
+          }
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Error message if status is 'error'",
+          "example": "Error: Task not found"
+        }
+      },
+      "additionalProperties": false
+    },
+    "task": {
+      "type": "object",
+      "title": "Task",
+      "description": "Todo item managed through chatbot (Phase 2 reference)",
+      "required": [
+        "id",
+        "user_id",
+        "title",
+        "completed",
+        "created_at",
+        "updated_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "description": "Unique task ID (auto-increment)",
+          "minimum": 1,
+          "example": 42
+        },
+        "user_id": {
+          "type": "string",
+          "description": "UUID of task owner",
+          "format": "uuid",
+          "example": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "title": {
+          "type": "string",
+          "description": "Task title (required, 1-200 chars)",
+          "minLength": 1,
+          "maxLength": 200,
+          "example": "Buy groceries"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional task description (max 1000 chars)",
+          "maxLength": 1000,
+          "example": "Milk, eggs, bread"
+        },
+        "completed": {
+          "type": "boolean",
+          "description": "Task completion status",
+          "default": false,
+          "example": false
+        },
+        "created_at": {
+          "type": "string",
+          "description": "Task creation timestamp (ISO 8601, UTC)",
+          "format": "date-time",
+          "example": "2025-12-15T10:30:00Z"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "Last task modification timestamp (ISO 8601, UTC)",
+          "format": "date-time",
+          "example": "2025-12-15T10:35:00Z"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chatRequest": {
+      "type": "object",
+      "title": "Chat Request",
+      "description": "Request body for POST /api/{user_id}/chat",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "conversation_id": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Existing conversation ID (null to create new)",
+          "minimum": 1,
+          "example": 123
+        },
+        "message": {
+          "type": "string",
+          "description": "User's natural language message",
+          "minLength": 1,
+          "maxLength": 10000,
+          "example": "Add a task to buy groceries tomorrow"
+        }
+      },
+      "additionalProperties": false
+    },
+    "chatResponse": {
+      "type": "object",
+      "title": "Chat Response",
+      "description": "Response body for POST /api/{user_id}/chat",
+      "required": [
+        "status",
+        "data",
+        "error"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "description": "Operation status",
+          "enum": [
+            "success",
+            "error"
+          ],
+          "example": "success"
+        },
+        "data": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "Response data (null if error)",
+          "properties": {
+            "conversation_id": {
+              "type": "integer",
+              "description": "Conversation ID (new or existing)",
+              "example": 123
+            },
+            "response": {
+              "type": "string",
+              "description": "Chatbot's natural language response",
+              "example": "I've added 'Buy groceries' to your task list."
+            },
+            "tool_calls": {
+              "type": "array",
+              "description": "Array of MCP tools invoked",
+              "items": {
+                "$ref": "#/definitions/toolCall"
+              }
+            }
+          },
+          "required": [
+            "conversation_id",
+            "response",
+            "tool_calls"
+          ],
+          "additionalProperties": false
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Error message with 'Error: ' prefix (null if success)",
+          "example": "Error: Task not found"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "type": "object",
+  "title": "Conversation Model Definition",
+  "properties": {
+    "conversation": {
+      "$ref": "#/definitions/conversation"
+    },
+    "message": {
+      "$ref": "#/definitions/message"
+    },
+    "toolCall": {
+      "$ref": "#/definitions/toolCall"
+    },
+    "task": {
+      "$ref": "#/definitions/task"
+    },
+    "chatRequest": {
+      "$ref": "#/definitions/chatRequest"
+    },
+    "chatResponse": {
+      "$ref": "#/definitions/chatResponse"
+    }
+  }
+}

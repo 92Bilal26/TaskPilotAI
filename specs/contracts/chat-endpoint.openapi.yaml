@@ -1,0 +1,494 @@
+openapi: 3.0.0
+info:
+  title: Phase 3 Chat Endpoint API
+  description: Chatbot interface for natural language task management
+  version: 1.0.0
+  contact:
+    name: TaskPilotAI Team
+    url: https://github.com/92Bilal26/TaskPilotAI
+
+servers:
+  - url: http://localhost:8000
+    description: Local development
+  - url: https://api.taskpilot.ai
+    description: Production
+
+tags:
+  - name: Chat
+    description: Chatbot conversation endpoints
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      operationId: sendChatMessage
+      summary: Send message to chatbot
+      description: |
+        Submit a natural language message to the chatbot. The system processes the message,
+        selects appropriate tools (MCP tools), executes them, and returns a response.
+
+        Conversation history is fetched from database, message is stored, agent runs,
+        response is streamed back and stored.
+      tags:
+        - Chat
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: User ID from JWT token
+          schema:
+            type: string
+            format: uuid
+            example: "550e8400-e29b-41d4-a716-446655440000"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+            examples:
+              createTask:
+                summary: Create a task
+                value:
+                  conversation_id: 123
+                  message: "Add a task to buy groceries tomorrow"
+              viewTasks:
+                summary: View pending tasks
+                value:
+                  conversation_id: 123
+                  message: "Show me my pending tasks"
+              markComplete:
+                summary: Mark task complete
+                value:
+                  conversation_id: 123
+                  message: "Mark the groceries task as done"
+      responses:
+        '200':
+          description: Message processed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+              examples:
+                success:
+                  summary: Successful task creation
+                  value:
+                    status: "success"
+                    data:
+                      conversation_id: 123
+                      response: "I've added 'Buy groceries' to your task list."
+                      tool_calls:
+                        - tool: "add_task"
+                          status: "success"
+                          parameters:
+                            title: "Buy groceries"
+                            description: "tomorrow"
+                          result:
+                            task_id: 42
+                            status: "created"
+                    error: null
+        '400':
+          description: Invalid request (validation error)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                data: null
+                error: "Error: Message cannot be empty"
+        '401':
+          description: Unauthorized (invalid or missing JWT token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                data: null
+                error: "Error: Invalid authentication token"
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                data: null
+                error: "Error: Conversation 999 not found"
+        '500':
+          description: Server error (database or API failure)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                status: "error"
+                data: null
+                error: "Error: Database connection failed. Please try again."
+
+    get:
+      operationId: getConversationHistory
+      summary: Get conversation history
+      description: Retrieve all messages from a specific conversation
+      tags:
+        - Chat
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: conversation_id
+          in: query
+          required: true
+          description: ID of conversation to retrieve
+          schema:
+            type: integer
+            example: 123
+        - name: limit
+          in: query
+          required: false
+          description: Max messages to return (default 100, max 1000)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          description: Message offset for pagination (default 0)
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: Conversation history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["success"]
+                  data:
+                    type: object
+                    properties:
+                      conversation_id:
+                        type: integer
+                      messages:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Message'
+                      total_messages:
+                        type: integer
+                      offset:
+                        type: integer
+                      limit:
+                        type: integer
+                  error:
+                    type: null
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/{user_id}/conversations:
+    get:
+      operationId: listConversations
+      summary: List user's conversations
+      description: Retrieve all conversations for the authenticated user
+      tags:
+        - Chat
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: offset
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        '200':
+          description: List of conversations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: ["success"]
+                  data:
+                    type: object
+                    properties:
+                      conversations:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ConversationSummary'
+                      total_conversations:
+                        type: integer
+                  error:
+                    type: null
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        conversation_id:
+          type: integer
+          nullable: true
+          description: Existing conversation ID; omit to create new conversation
+          example: 123
+        message:
+          type: string
+          minLength: 1
+          maxLength: 10000
+          description: User's natural language message
+          example: "Add a task to buy groceries tomorrow"
+
+    ChatResponse:
+      type: object
+      required:
+        - status
+        - data
+        - error
+      properties:
+        status:
+          type: string
+          enum: ["success", "error"]
+          description: Operation status
+        data:
+          type: object
+          nullable: true
+          properties:
+            conversation_id:
+              type: integer
+              description: Conversation ID (new or existing)
+            response:
+              type: string
+              description: Chatbot's natural language response
+            tool_calls:
+              type: array
+              description: Array of MCP tools invoked
+              items:
+                $ref: '#/components/schemas/ToolCall'
+        error:
+          type: string
+          nullable: true
+          description: Error message if status is "error"
+
+    ToolCall:
+      type: object
+      required:
+        - tool
+        - status
+      properties:
+        tool:
+          type: string
+          enum: ["add_task", "list_tasks", "complete_task", "delete_task", "update_task"]
+          description: MCP tool name
+        status:
+          type: string
+          enum: ["success", "error"]
+          description: Tool execution status
+        parameters:
+          type: object
+          nullable: true
+          description: Input parameters sent to tool
+          additionalProperties: true
+        result:
+          type: object
+          nullable: true
+          description: Output result from tool (null if error)
+          additionalProperties: true
+        error:
+          type: string
+          nullable: true
+          description: Error message if status is "error"
+
+    Message:
+      type: object
+      required:
+        - id
+        - conversation_id
+        - role
+        - content
+        - created_at
+      properties:
+        id:
+          type: integer
+          description: Message ID
+        conversation_id:
+          type: integer
+          description: Parent conversation ID
+        role:
+          type: string
+          enum: ["user", "assistant"]
+          description: Message sender
+        content:
+          type: string
+          description: Message text
+        tool_calls:
+          type: array
+          nullable: true
+          description: Tools invoked (only for assistant messages)
+          items:
+            $ref: '#/components/schemas/ToolCall'
+        created_at:
+          type: string
+          format: date-time
+          description: Message creation timestamp (ISO 8601, UTC)
+
+    ConversationSummary:
+      type: object
+      required:
+        - id
+        - user_id
+        - created_at
+        - updated_at
+        - message_count
+      properties:
+        id:
+          type: integer
+          description: Conversation ID
+        user_id:
+          type: string
+          format: uuid
+          description: Owner user ID
+        title:
+          type: string
+          nullable: true
+          description: Optional conversation title
+        created_at:
+          type: string
+          format: date-time
+          description: Conversation creation timestamp
+        updated_at:
+          type: string
+          format: date-time
+          description: Last message timestamp
+        message_count:
+          type: integer
+          description: Total messages in conversation
+        archived:
+          type: boolean
+          description: Whether conversation is archived
+
+    ErrorResponse:
+      type: object
+      required:
+        - status
+        - data
+        - error
+      properties:
+        status:
+          type: string
+          enum: ["error"]
+        data:
+          type: null
+        error:
+          type: string
+          description: Error message with "Error: " prefix
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Better Auth
+
+security:
+  - bearerAuth: []
+
+---
+
+## Implementation Notes
+
+### Streaming (Optional Enhancement)
+
+This OpenAPI spec defines request/response model. For real-time experience, implement WebSocket or Server-Sent Events (SSE):
+
+**Server-Sent Events (SSE)**:
+```
+POST /api/{user_id}/chat/stream
+Content-Type: text/event-stream
+
+data: {"type": "message_start", "content": "I've..."}
+data: {"type": "tool_call", "tool": "add_task", "status": "success"}
+data: {"type": "message_end"}
+```
+
+### Error Handling
+
+All errors follow format:
+```json
+{
+  "status": "error",
+  "data": null,
+  "error": "Error: <specific message>"
+}
+```
+
+Error messages always start with "Error: " prefix.
+
+### Rate Limiting
+
+Recommended (not implemented in Phase 3):
+- 100 requests per hour per user
+- Return 429 Too Many Requests when exceeded
+
+### Response Times
+
+Performance targets (from spec):
+- Chat response: < 3 seconds
+- Tool execution: < 500ms
+- Message storage: < 100ms
+
+### Conversation Management
+
+- Omit `conversation_id` in request → creates new Conversation
+- Include `conversation_id` → continues existing conversation
+- Frontend responsible for tracking active conversation_id
+- Server stores all messages for history
+
+---
+
+**Version**: 1.0
+**Status**: Complete
+**Date**: 2025-12-15

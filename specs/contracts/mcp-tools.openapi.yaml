@@ -1,0 +1,697 @@
+openapi: 3.0.0
+info:
+  title: Phase 3 MCP Tools Specification
+  description: Official MCP tools for task management in Phase 3 chatbot
+  version: 1.0.0
+  contact:
+    name: TaskPilotAI Team
+
+servers:
+  - url: mcp://localhost:8000
+    description: Local MCP server
+
+tags:
+  - name: Task Management Tools
+    description: Five MCP tools for conversational task operations
+
+paths:
+  /mcp/tools/add_task:
+    post:
+      operationId: addTask
+      summary: Create a new task
+      description: |
+        MCP tool to create a task with provided title and optional description.
+        Validates inputs, auto-assigns ID, stores in database.
+      tags:
+        - Task Management Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddTaskRequest'
+      responses:
+        '200':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddTaskResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolErrorResponse'
+
+  /mcp/tools/list_tasks:
+    post:
+      operationId: listTasks
+      summary: List user's tasks with optional filter
+      description: |
+        Retrieve user's tasks filtered by status (all/pending/completed).
+        Returns array of task objects ordered by creation date.
+      tags:
+        - Task Management Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListTasksRequest'
+      responses:
+        '200':
+          description: Tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListTasksResponse'
+
+  /mcp/tools/complete_task:
+    post:
+      operationId: completeTask
+      summary: Toggle task completion status
+      description: |
+        Mark a task as complete or revert to pending.
+        Behavior: pending → completed, completed → pending (toggle).
+        Updates updated_at timestamp.
+      tags:
+        - Task Management Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompleteTaskRequest'
+      responses:
+        '200':
+          description: Task completion toggled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskOperationResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolErrorResponse'
+
+  /mcp/tools/delete_task:
+    post:
+      operationId: deleteTask
+      summary: Delete a task permanently
+      description: |
+        Permanently remove a task from user's task list.
+        No recovery possible. Verify ownership before deletion.
+      tags:
+        - Task Management Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeleteTaskRequest'
+      responses:
+        '200':
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskOperationResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolErrorResponse'
+
+  /mcp/tools/update_task:
+    post:
+      operationId: updateTask
+      summary: Update task title and/or description
+      description: |
+        Update one or both fields of an existing task.
+        created_at remains unchanged; updated_at is refreshed.
+        At least one field (title or description) required.
+      tags:
+        - Task Management Tools
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskOperationResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ToolErrorResponse'
+
+components:
+  schemas:
+    # Input Schemas
+
+    AddTaskRequest:
+      type: object
+      required:
+        - user_id
+        - title
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User ID from JWT token (validated)
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          description: Task title (required, 1-200 chars)
+          example: "Buy groceries"
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: Optional task description (max 1000 chars)
+          example: "Milk, eggs, bread"
+
+    ListTasksRequest:
+      type: object
+      required:
+        - user_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User ID from JWT token
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        status:
+          type: string
+          enum: ["all", "pending", "completed"]
+          default: "all"
+          description: Filter by task status (default: all)
+          example: "pending"
+
+    CompleteTaskRequest:
+      type: object
+      required:
+        - user_id
+        - task_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User ID from JWT token
+        task_id:
+          type: integer
+          minimum: 1
+          description: Task ID to toggle
+        as_completed:
+          type: boolean
+          nullable: true
+          description: Optional explicit state (if omitted, toggle)
+
+    DeleteTaskRequest:
+      type: object
+      required:
+        - user_id
+        - task_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User ID from JWT token
+        task_id:
+          type: integer
+          minimum: 1
+          description: Task ID to delete
+
+    UpdateTaskRequest:
+      type: object
+      required:
+        - user_id
+        - task_id
+      properties:
+        user_id:
+          type: string
+          format: uuid
+          description: User ID from JWT token
+        task_id:
+          type: integer
+          minimum: 1
+          description: Task ID to update
+        title:
+          type: string
+          minLength: 1
+          maxLength: 200
+          nullable: true
+          description: New title (optional)
+        description:
+          type: string
+          maxLength: 1000
+          nullable: true
+          description: New description (optional)
+
+    # Output Schemas
+
+    AddTaskResponse:
+      type: object
+      required:
+        - status
+        - task_id
+        - title
+      properties:
+        status:
+          type: string
+          enum: ["created", "error"]
+        task_id:
+          type: integer
+          description: Auto-assigned task ID
+        title:
+          type: string
+          description: Task title (echoed)
+        message:
+          type: string
+          example: "Task 'Buy groceries' created with ID 42"
+
+    ListTasksResponse:
+      type: object
+      required:
+        - status
+        - tasks
+      properties:
+        status:
+          type: string
+          enum: ["success", "error"]
+        tasks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Task'
+          description: Array of user's tasks (may be empty)
+
+    Task:
+      type: object
+      required:
+        - id
+        - title
+        - completed
+        - created_at
+      properties:
+        id:
+          type: integer
+          description: Task ID
+        title:
+          type: string
+          description: Task title
+        description:
+          type: string
+          nullable: true
+          description: Task description
+        completed:
+          type: boolean
+          description: Completion status
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp (ISO 8601, UTC)
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp (ISO 8601, UTC)
+
+    TaskOperationResponse:
+      type: object
+      required:
+        - status
+        - task_id
+        - title
+      properties:
+        status:
+          type: string
+          enum: ["success", "error"]
+        task_id:
+          type: integer
+          description: Task ID affected
+        title:
+          type: string
+          description: Task title
+        completed:
+          type: boolean
+          nullable: true
+          description: New completion status (for complete_task)
+        message:
+          type: string
+          description: Operation confirmation message
+
+    ToolErrorResponse:
+      type: object
+      required:
+        - status
+        - error
+      properties:
+        status:
+          type: string
+          enum: ["error"]
+        error:
+          type: string
+          description: Error message with "Error: " prefix
+          example: "Error: Task ID 999 not found"
+        details:
+          type: object
+          nullable: true
+          description: Additional error details
+          additionalProperties: true
+
+---
+
+## Tool Behavior Specification
+
+### Tool 1: add_task
+
+**Purpose**: Create a new task with given title and optional description
+
+**Input Validation**:
+- `user_id`: UUID format, must be authenticated user
+- `title`: Required, 1-200 characters, non-empty
+- `description`: Optional, max 1000 characters
+
+**Processing**:
+1. Validate inputs (length, type)
+2. Verify user_id matches JWT token
+3. Create Task object with auto-assigned ID
+4. Set created_at = updated_at = UTC now
+5. Store in database
+6. Return created task info
+
+**Success Response**:
+```json
+{
+  "status": "created",
+  "task_id": 42,
+  "title": "Buy groceries",
+  "message": "Task 'Buy groceries' created with ID 42"
+}
+```
+
+**Error Handling**:
+- Invalid title length → `Error: Title must be 1-200 characters`
+- Invalid description length → `Error: Description max 1000 characters`
+- Database error → Auto-retry once, then return error
+- User isolation violation → `Error: Unauthorized`
+
+---
+
+### Tool 2: list_tasks
+
+**Purpose**: Retrieve user's tasks with optional status filter
+
+**Input Validation**:
+- `user_id`: UUID format, authenticated user
+- `status`: Optional enum (all/pending/completed), default "all"
+
+**Processing**:
+1. Fetch all tasks for user_id from database
+2. Filter by status if provided:
+   - "pending" → completed = false
+   - "completed" → completed = true
+   - "all" → no filter
+3. Order by created_at (oldest first)
+4. Return array of tasks
+
+**Success Response**:
+```json
+{
+  "status": "success",
+  "tasks": [
+    {
+      "id": 42,
+      "title": "Buy groceries",
+      "description": "Milk, eggs, bread",
+      "completed": false,
+      "created_at": "2025-12-15T10:30:00Z",
+      "updated_at": "2025-12-15T10:30:00Z"
+    },
+    {
+      "id": 43,
+      "title": "Call mom",
+      "description": null,
+      "completed": true,
+      "created_at": "2025-12-15T10:35:00Z",
+      "updated_at": "2025-12-15T10:40:00Z"
+    }
+  ]
+}
+```
+
+**Empty Result**:
+```json
+{
+  "status": "success",
+  "tasks": []
+}
+```
+
+**Error Handling**:
+- Invalid status enum → Return error
+- Database error → Auto-retry once, then error
+- User not found → Return empty array (soft fail)
+
+---
+
+### Tool 3: complete_task
+
+**Purpose**: Toggle task completion status
+
+**Input Validation**:
+- `user_id`: UUID, authenticated user
+- `task_id`: Positive integer, task must exist
+- `as_completed`: Optional boolean (if omitted, toggle)
+
+**Processing**:
+1. Fetch task by ID from database
+2. Verify user_id owns the task
+3. Toggle completion:
+   - If `as_completed` provided: set to that value
+   - Otherwise: flip boolean (false → true, true → false)
+4. Update updated_at = UTC now
+5. Store updated task
+6. Return confirmation
+
+**Success Response**:
+```json
+{
+  "status": "success",
+  "task_id": 42,
+  "title": "Buy groceries",
+  "completed": true,
+  "message": "I've marked 'Buy groceries' as complete"
+}
+```
+
+**Error Handling**:
+- Task not found → `Error: Task ID 999 not found`
+- User isolation violation → `Error: You can only access your own tasks`
+- Invalid task_id → `Error: Task ID must be a positive number`
+- Database error → Auto-retry once, then error
+
+---
+
+### Tool 4: delete_task
+
+**Purpose**: Permanently remove a task
+
+**Input Validation**:
+- `user_id`: UUID, authenticated user
+- `task_id`: Positive integer
+
+**Processing**:
+1. Fetch task by ID
+2. Verify user_id owns the task
+3. Delete from database (permanent, no recovery)
+4. Return deleted task info
+
+**Success Response**:
+```json
+{
+  "status": "success",
+  "task_id": 42,
+  "title": "Buy groceries",
+  "message": "I've removed 'Buy groceries' from your task list"
+}
+```
+
+**Error Handling**:
+- Task not found → `Error: Task ID 999 not found`
+- User isolation violation → `Error: You cannot delete other users' tasks`
+- Database error → Auto-retry once, then error
+
+---
+
+### Tool 5: update_task
+
+**Purpose**: Modify task title and/or description
+
+**Input Validation**:
+- `user_id`: UUID, authenticated user
+- `task_id`: Positive integer
+- `title`: Optional, 1-200 chars if provided
+- `description`: Optional, max 1000 chars if provided
+- At least one of title/description required
+
+**Processing**:
+1. Fetch task by ID
+2. Verify user_id owns task
+3. Validate provided fields (length)
+4. Update only provided fields:
+   - Keep created_at unchanged
+   - Keep completed status unchanged
+5. Set updated_at = UTC now
+6. Store updated task
+7. Return confirmation
+
+**Success Response**:
+```json
+{
+  "status": "success",
+  "task_id": 42,
+  "title": "Buy groceries and fruits",
+  "message": "Updated task to 'Buy groceries and fruits'"
+}
+```
+
+**Error Handling**:
+- Task not found → `Error: Task ID 999 not found`
+- No fields provided → `Error: Provide at least title or description to update`
+- Invalid title length → `Error: Title must be 1-200 characters`
+- Invalid description length → `Error: Description max 1000 characters`
+- User isolation violation → `Error: You can only update your own tasks`
+- Database error → Auto-retry once, then error
+
+---
+
+## Error Recovery Strategy
+
+### Tool Failure Handling
+
+When MCP tool fails:
+
+1. **First Attempt**: Execute tool
+   - If success → Return result
+   - If failure → Wait 500ms, proceed to retry
+
+2. **Second Attempt**: Auto-retry once
+   - If success → Return result
+   - If failure → Return error to user
+
+3. **User Notification**: Only if both attempts fail
+   - Error message with recovery suggestion
+   - Example: "Couldn't complete task. Please try again."
+
+### Common Error Codes
+
+| Error | Status | Recovery Suggestion |
+|-------|--------|---------------------|
+| Task not found | 404 | Show user's task list |
+| User isolation | 403 | Inform user (suspicious activity) |
+| Database error | 500 | "Try again" or "Contact support" |
+| Invalid input | 400 | Show validation error + expected format |
+| Rate limit | 429 | "Too many requests. Wait a moment." |
+
+---
+
+## Performance Requirements
+
+All MCP tools must respond within 500ms under normal load:
+
+| Tool | Typical Response | Worst Case |
+|------|---|---|
+| add_task | 100-200ms | 400ms |
+| list_tasks | 50-150ms | 300ms |
+| complete_task | 80-180ms | 350ms |
+| delete_task | 80-180ms | 350ms |
+| update_task | 100-200ms | 400ms |
+
+---
+
+## Security Requirements
+
+### User Isolation
+
+**All tools MUST**:
+1. Receive user_id from request
+2. Verify task.user_id == request.user_id before operating
+3. Return error if mismatch
+4. Never expose other user's tasks
+
+### Input Validation
+
+**All tools MUST**:
+1. Validate input types (string, integer, UUID)
+2. Validate string lengths (title, description)
+3. Validate enums (status in list_tasks)
+4. Reject invalid input with clear error message
+
+### Database Safety
+
+**All tools MUST**:
+1. Use parameterized queries (prevent SQL injection)
+2. Use transactions for multi-step operations
+3. Handle connection errors gracefully
+4. Implement auto-retry for transient failures
+
+---
+
+## Testing Specification
+
+### Unit Tests (per tool)
+
+Each tool should have ≥15 tests covering:
+- Valid input → successful execution
+- Invalid input → validation error
+- Missing required field → error
+- User isolation violation → error
+- Database error (with retry) → success or error
+- Edge cases (empty strings, max length, etc.)
+
+### Integration Tests
+
+- Multi-tool execution in one conversation
+- Concurrent tool calls from same user
+- Transaction consistency (e.g., create then list)
+- Error recovery and retry logic
+
+### Load Tests
+
+- 100 concurrent add_task calls
+- Verify all complete < 500ms
+- Monitor database connection pool
+
+---
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2025-12-15 | Initial MCP tools specification for Phase 3 |
+
+---
+
+**Status**: Complete
+**Date**: 2025-12-15
+**Format**: MCP Server Implementation (Python)
+**Official SDK**: Use modelcontextprotocol Python SDK
