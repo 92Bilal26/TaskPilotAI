@@ -245,9 +245,27 @@ class TaskAgent:
                                 }
                             )
 
-                            # Extract message from tool result
-                            if isinstance(result, dict) and "message" in result:
-                                assistant_message = result["message"]
+                            # Extract message from tool result and format response
+                            if isinstance(result, dict):
+                                # For list_tasks, include the full task list in response
+                                if tool_name == "list_tasks" and "tasks" in result:
+                                    tasks = result.get("tasks", [])
+                                    message = result.get("message", "")
+
+                                    if tasks:
+                                        # Format tasks as a readable list
+                                        task_list_str = "\n\n📋 **Your Tasks:**\n"
+                                        for i, task in enumerate(tasks, 1):
+                                            status = "✅" if task.get("completed") else "⏳"
+                                            task_list_str += f"{i}. {status} **{task.get('title', 'Untitled')}**"
+                                            if task.get("description"):
+                                                task_list_str += f"\n   📝 {task.get('description')}"
+                                            task_list_str += "\n"
+                                        assistant_message = f"{message}\n{task_list_str}"
+                                    else:
+                                        assistant_message = message
+                                elif "message" in result:
+                                    assistant_message = result["message"]
 
                             logger.info(f"Tool {tool_name} executed successfully")
                         else:
