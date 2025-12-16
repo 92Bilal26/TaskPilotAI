@@ -70,17 +70,29 @@ export function ChatWindow({
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${apiUrl}/api/${userId}/chat`, {
+      const requestUrl = `${apiUrl}/api/${userId}/chat`
+      const requestBody = {
+        content: messageContent,
+        conversation_id: conversationId_state,
+      }
+
+      console.log('Sending chat request:', {
+        url: requestUrl,
+        userId,
+        authToken: authToken.substring(0, 20) + '...',
+        body: requestBody,
+      })
+
+      const response = await fetch(requestUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          content: messageContent,
-          conversation_id: conversationId_state,
-        }),
+        body: JSON.stringify(requestBody),
       })
+
+      console.log('Response status:', response.status)
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
