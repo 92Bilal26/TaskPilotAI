@@ -12,7 +12,7 @@ from sqlmodel import Session, select
 from datetime import datetime
 from db import get_session
 from models import Conversation, Message
-from agents.openai_agent_sdk import OpenAIAgentSDK
+from agents.official_openai_agent import TaskManagementAgent, create_task_agent
 from agents.conversation_context import get_conversation_context
 from mcp.server import initialize_mcp_server
 
@@ -113,11 +113,11 @@ async def chat(
             f"Loaded conversation context with {len(conversation_history)} previous messages"
         )
 
-        # Initialize OpenAI Agents SDK agent
+        # Initialize official OpenAI Agents SDK agent
         try:
-            agent = OpenAIAgentSDK()  # Uses OPENAI_API_KEY from config
+            agent = create_task_agent()  # Uses OPENAI_API_KEY from config
         except ValueError as e:
-            logger.error(f"Failed to initialize OpenAI Agents SDK: {e}")
+            logger.error(f"Failed to initialize official OpenAI Agents SDK: {e}")
             raise HTTPException(
                 status_code=500,
                 detail="Agent initialization failed. Check OpenAI API key configuration.",
