@@ -1,7 +1,10 @@
-"""Task Agent using OpenAI Agents SDK
+"""Task Agent using OpenAI ChatCompletions API with Custom Agentic Loop
 
-This module initializes and manages the task agent that processes natural language
-requests and coordinates MCP tool execution for task management.
+This module implements a custom agent that:
+- Uses OpenAI ChatCompletions API with function calling
+- Implements a custom agentic loop for multi-step tool execution
+- Coordinates MCP tool execution for task management
+- NOT using the official OpenAI Agents SDK (using custom loop instead)
 """
 
 import logging
@@ -16,11 +19,12 @@ logger = logging.getLogger(__name__)
 class TaskAgent:
     """Agent for processing natural language task management requests
 
-    Uses OpenAI Agents SDK to:
+    Uses OpenAI ChatCompletions API with custom agentic loop to:
     1. Accept natural language messages from users
-    2. Select appropriate MCP tools based on user intent
-    3. Execute tools and return results
-    4. Generate natural language responses
+    2. Select appropriate MCP tools based on user intent (via function calling)
+    3. Execute tools and feed results back to AI for next step
+    4. Support multi-step operations (find task → delete/update → confirm)
+    5. Generate natural language responses based on tool results
     """
 
     def __init__(self, api_key: Optional[str] = None):
