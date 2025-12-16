@@ -8,6 +8,7 @@ import { Sidebar } from "@/components/Layout/Sidebar";
 import { Header } from "@/components/Layout/Header";
 import { TaskCard } from "@/components/Tasks/TaskCard";
 import { TaskEditModal } from "@/components/Tasks/TaskEditModal";
+import { ChatModal } from "@/components/Chat/ChatModal";
 import { Toast } from "@/components/Toast/Toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,29 @@ export default function DashboardPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [authToken, setAuthToken] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+
+  // Extract user ID from JWT token and get auth token
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = apiClient.getAuthToken();
+      if (token) {
+        setAuthToken(token);
+        // Decode JWT to get user_id (third part is the payload)
+        try {
+          const parts = token.split('.');
+          if (parts.length === 3) {
+            const decoded = JSON.parse(atob(parts[1]));
+            setUserId(decoded.user_id || decoded.sub || '');
+          }
+        } catch (e) {
+          console.error('Failed to decode token:', e);
+        }
+      }
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
@@ -154,9 +178,18 @@ export default function DashboardPage() {
           title="Task Dashboard"
           subtitle="Manage and organize your tasks efficiently"
           action={
-            <Button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
-              + New Task
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setIsChatOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+                title="Open ChatPilot AI"
+              >
+                💬 Chat
+              </Button>
+              <Button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
+                + New Task
+              </Button>
+            </div>
           }
         />
 
@@ -323,6 +356,16 @@ export default function DashboardPage() {
         onSave={handleSaveEdit}
         isLoading={loading}
       />
+
+      {/* Chat Modal */}
+      {authToken && userId && (
+        <ChatModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          userId={userId}
+          authToken={authToken}
+        />
+      )}
 
       {/* Toasts */}
       <Toast messages={toasts} onRemove={removeToast} />
