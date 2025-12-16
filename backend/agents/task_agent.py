@@ -237,7 +237,7 @@ class TaskAgent:
         user_id: str,
         messages: list[dict[str, str]],
     ) -> dict[str, Any]:
-        """Call OpenAI API with available tools
+        """Call OpenAI API with available tools using agentic loop
 
         Args:
             user_id: User ID for context
@@ -249,91 +249,114 @@ class TaskAgent:
         logger.info(f"Calling OpenAI API with {len(self.tools)} tools")
 
         try:
-            # Call OpenAI with tools
-            response = self.client.chat.completions.create(
-                model="gpt-4-turbo-preview",
-                messages=messages,
-                tools=self.tool_definitions if self.tool_definitions else None,
-                tool_choice="auto" if self.tool_definitions else None,
-            )
+            # Agentic loop - keep calling until AI is done using tools
+            tool_calls_list = []
+            assistant_message = ""
+            max_iterations = 5  # Prevent infinite loops
 
-            logger.info(f"OpenAI response: {response.choices[0].finish_reason}")
+            for iteration in range(max_iterations):
+                logger.info(f"Agent iteration {iteration + 1}")
 
-            # Extract response content
-            assistant_message = response.choices[0].message.content or ""
+                # Call OpenAI with tools
+                response = self.client.chat.completions.create(
+                    model="gpt-4-turbo-preview",
+                    messages=messages,
+                    tools=self.tool_definitions if self.tool_definitions else None,
+                    tool_choice="auto" if self.tool_definitions else None,
+                )
 
-            # Process tool calls if any
-            tool_calls = []
-            if response.choices[0].message.tool_calls:
-                for tool_call in response.choices[0].message.tool_calls:
-                    tool_name = tool_call.function.name
-                    tool_args = json.loads(tool_call.function.arguments)
+                logger.info(f"OpenAI response: {response.choices[0].finish_reason}")
 
-                    # Execute tool
-                    try:
-                        if tool_name in self.tools:
-                            # Add user_id to arguments
-                            tool_args["user_id"] = user_id
-                            result = self.tools[tool_name](**tool_args)
+                # Extract response content
+                assistant_message = response.choices[0].message.content or ""
 
+                # Process tool calls if any
+                tool_calls = []
+                if response.choices[0].message.tool_calls:
+                    for tool_call in response.choices[0].message.tool_calls:
+                        tool_name = tool_call.function.name
+                        tool_args = json.loads(tool_call.function.arguments)
+
+                        # Execute tool
+                        try:
+                            if tool_name in self.tools:
+                                # Add user_id to arguments
+                                tool_args["user_id"] = user_id
+                                result = self.tools[tool_name](**tool_args)
+
+                                tool_calls.append(
+                                    {
+                                        "name": tool_name,
+                                        "arguments": tool_call.function.arguments,
+                                        "result": result,
+                                    }
+                                )
+                                tool_calls_list.extend(tool_calls)
+
+                                # Extract message from tool result and format response
+                                if isinstance(result, dict):
+                                    # For list_tasks, include the full task list in response
+                                    if tool_name == "list_tasks" and "tasks" in result:
+                                        tasks = result.get("tasks", [])
+                                        message = result.get("message", "")
+
+                                        if tasks:
+                                            # Format tasks as a readable list
+                                            task_list_str = "\n\n📋 **Your Tasks:**\n"
+                                            for i, task in enumerate(tasks, 1):
+                                                status = "✅" if task.get("completed") else "⏳"
+                                                task_list_str += f"{i}. {status} **{task.get('title', 'Untitled')}**"
+                                                if task.get("description"):
+                                                    task_list_str += f"\n   📝 {task.get('description')}"
+                                                task_list_str += "\n"
+                                            assistant_message = f"{message}\n{task_list_str}"
+                                        else:
+                                            assistant_message = message
+                                    elif tool_name == "find_task_by_name":
+                                        # For find_task_by_name, provide confirmation with task details
+                                        if result.get("success"):
+                                            title = result.get("title", "Unknown")
+                                            completed = result.get("completed", False)
+                                            status = "✅ completed" if completed else "⏳ pending"
+                                            desc = result.get("description", "")
+                                            assistant_message = f"Found '{title}' ({status})"
+                                            if desc:
+                                                assistant_message += f"\n📝 {desc}"
+                                        else:
+                                            assistant_message = result.get("message", "Task not found")
+                                    elif "message" in result:
+                                        assistant_message = result["message"]
+
+                                logger.info(f"Tool {tool_name} executed successfully")
+                            else:
+                                logger.warning(f"Tool {tool_name} not found")
+                        except Exception as e:
+                            logger.error(f"Error executing tool {tool_name}: {e}")
                             tool_calls.append(
                                 {
                                     "name": tool_name,
                                     "arguments": tool_call.function.arguments,
-                                    "result": result,
+                                    "error": str(e),
                                 }
                             )
+                            tool_calls_list.extend(tool_calls)
 
-                            # Extract message from tool result and format response
-                            if isinstance(result, dict):
-                                # For list_tasks, include the full task list in response
-                                if tool_name == "list_tasks" and "tasks" in result:
-                                    tasks = result.get("tasks", [])
-                                    message = result.get("message", "")
-
-                                    if tasks:
-                                        # Format tasks as a readable list
-                                        task_list_str = "\n\n📋 **Your Tasks:**\n"
-                                        for i, task in enumerate(tasks, 1):
-                                            status = "✅" if task.get("completed") else "⏳"
-                                            task_list_str += f"{i}. {status} **{task.get('title', 'Untitled')}**"
-                                            if task.get("description"):
-                                                task_list_str += f"\n   📝 {task.get('description')}"
-                                            task_list_str += "\n"
-                                        assistant_message = f"{message}\n{task_list_str}"
-                                    else:
-                                        assistant_message = message
-                                elif tool_name == "find_task_by_name":
-                                    # For find_task_by_name, provide confirmation with task details
-                                    if result.get("success"):
-                                        title = result.get("title", "Unknown")
-                                        completed = result.get("completed", False)
-                                        status = "✅ completed" if completed else "⏳ pending"
-                                        desc = result.get("description", "")
-                                        assistant_message = f"Found '{title}' ({status})"
-                                        if desc:
-                                            assistant_message += f"\n📝 {desc}"
-                                    else:
-                                        assistant_message = result.get("message", "Task not found")
-                                elif "message" in result:
-                                    assistant_message = result["message"]
-
-                            logger.info(f"Tool {tool_name} executed successfully")
-                        else:
-                            logger.warning(f"Tool {tool_name} not found")
-                    except Exception as e:
-                        logger.error(f"Error executing tool {tool_name}: {e}")
-                        tool_calls.append(
-                            {
-                                "name": tool_name,
-                                "arguments": tool_call.function.arguments,
-                                "error": str(e),
-                            }
-                        )
+                    # Add tool results to message history for next iteration
+                    messages.append(response.choices[0].message)
+                    for tool_result in tool_calls:
+                        messages.append({
+                            "role": "tool",
+                            "tool_call_id": tool_result.get("tool_call_id", ""),
+                            "content": json.dumps(tool_result.get("result", {}) if tool_result.get("result") else {"error": tool_result.get("error")}),
+                        })
+                else:
+                    # No more tool calls, AI is done
+                    logger.info("Agent finished, no more tool calls")
+                    break
 
             return {
                 "response": assistant_message or "I've processed your request",
-                "tool_calls": tool_calls,
+                "tool_calls": tool_calls_list,
                 "status": "success",
             }
 
