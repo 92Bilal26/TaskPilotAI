@@ -12,8 +12,8 @@ from sqlmodel import Session, select
 from datetime import datetime
 from db import get_session
 from models import Conversation, Message
-from agents.official_openai_agent import TaskManagementAgent, create_task_agent
-from agents.conversation_context import get_conversation_context
+from task_agents.official_openai_agent import TaskManagementAgent, create_task_agent
+from task_agents.conversation_context import get_conversation_context
 from mcp.server import initialize_mcp_server
 
 logger = logging.getLogger(__name__)
@@ -113,9 +113,13 @@ async def chat(
             f"Loaded conversation context with {len(conversation_history)} previous messages"
         )
 
-        # Initialize official OpenAI Agents SDK agent
+        # Initialize MCP server and get tools
+        mcp_server = initialize_mcp_server()
+        tools_list = list(mcp_server.get_tools().values())
+
+        # Initialize official OpenAI Agents SDK agent with tools
         try:
-            agent = create_task_agent()  # Uses OPENAI_API_KEY from config
+            agent = create_task_agent(tools=tools_list)  # Uses OPENAI_API_KEY from config
         except ValueError as e:
             logger.error(f"Failed to initialize official OpenAI Agents SDK: {e}")
             raise HTTPException(
@@ -123,12 +127,7 @@ async def chat(
                 detail="Agent initialization failed. Check OpenAI API key configuration.",
             )
 
-        # Initialize MCP server and register tools with agent
-        mcp_server = initialize_mcp_server()
-        for tool_name, tool_func in mcp_server.get_tools().items():
-            agent.register_tool(tool_name, tool_func)
-
-        logger.info(f"Agent initialized with {len(agent.get_available_tools())} tools")
+        logger.info(f"Agent initialized with {len(tools_list)} tools")
 
         # Process message with agent
         try:

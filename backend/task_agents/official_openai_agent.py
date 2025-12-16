@@ -12,7 +12,8 @@ Key Features:
 
 import logging
 from typing import Any, Optional, Callable, Dict
-from agents import Agent
+from agents import Agent, Runner, set_default_openai_key  # Official OpenAI Agents SDK
+from agents.tool import function_tool  # Wrapper for tool functions
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -32,8 +33,11 @@ class TaskManagementAgent:
     - Session: Automatic conversation history
     """
 
-    def __init__(self):
+    def __init__(self, tools: Optional[list[Callable]] = None):
         """Initialize the task management agent with official SDK
+
+        Args:
+            tools: Optional list of tool functions to register
 
         Raises:
             ValueError: If OpenAI API key is not configured
@@ -42,6 +46,9 @@ class TaskManagementAgent:
         api_key = settings.OPENAI_API_KEY
         if not api_key or api_key == "sk-test-key":
             raise ValueError("OPENAI_API_KEY must be set in environment")
+
+        # Set default OpenAI API key for the agents SDK
+        set_default_openai_key(api_key)
 
         # Agent instructions for multi-step task operations
         instructions = """You are TaskPilot AI, a helpful task management assistant powered by OpenAI.
@@ -75,11 +82,16 @@ Multi-step example:
 
 Be helpful, clear, and confirm all actions."""
 
+        # Wrap tools with function_tool decorator for official SDK compatibility
+        wrapped_tools = [function_tool(tool) for tool in (tools or [])]
+
         # Create agent with official SDK
+        # Pass tools upfront if provided, otherwise use empty list
         self.agent = Agent(
             name="TaskPilot AI",
             instructions=instructions,
             model="gpt-4-turbo-preview",  # Latest model
+            tools=wrapped_tools,  # Initialize with wrapped tools
         )
 
         # Dictionary to store registered tools
@@ -102,9 +114,10 @@ Be helpful, clear, and confirm all actions."""
         """
         self.tools[name] = tool_func
 
-        # Register with agent
-        # The SDK uses function introspection, so no manual schema needed
-        self.agent.tools.append(tool_func)
+        # Register with agent - wrap with function_tool for SDK compatibility
+        # The SDK uses function_tool wrapper to handle tool introspection
+        wrapped_tool = function_tool(tool_func)
+        self.agent.tools.append(wrapped_tool)
 
         logger.info(f"Tool registered: {name}")
 
@@ -151,16 +164,13 @@ Be helpful, clear, and confirm all actions."""
 
             # The official SDK's Runner handles the entire agent loop
             # No manual iteration needed - it's all built-in
-            from agents import Runner
-
-            # Run the agent synchronously
             # Runner automatically:
             # - Calls the LLM
             # - Selects appropriate tools
             # - Executes tools
             # - Feeds results back to LLM
             # - Loops until task is complete
-            result = Runner.run_sync(
+            result = await Runner.run(
                 self.agent,
                 augmented_message,
             )
@@ -197,9 +207,12 @@ Be helpful, clear, and confirm all actions."""
             }
 
 
-def create_task_agent() -> TaskManagementAgent:
+def create_task_agent(tools: Optional[list[Callable]] = None) -> TaskManagementAgent:
     """
     Factory function to create and configure a task management agent.
+
+    Args:
+        tools: Optional list of tool functions to register with the agent
 
     Returns:
         Configured TaskManagementAgent instance
@@ -208,5 +221,5 @@ def create_task_agent() -> TaskManagementAgent:
         ValueError: If OpenAI API key is not configured
     """
     logger.info("Creating TaskManagementAgent with official OpenAI Agents SDK")
-    agent = TaskManagementAgent()
+    agent = TaskManagementAgent(tools=tools)
     return agent

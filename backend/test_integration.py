@@ -11,7 +11,7 @@ Tests the complete flow:
 
 import asyncio
 import sys
-from agents.task_agent import TaskAgent
+from task_agents.task_agent import TaskAgent
 from mcp.server import initialize_mcp_server
 import logging
 

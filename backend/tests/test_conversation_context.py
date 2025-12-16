@@ -10,7 +10,7 @@ Tests for:
 import pytest
 from sqlmodel import Session, select
 from models import Conversation, Message, User
-from agents.conversation_context import (
+from task_agents.conversation_context import (
     ConversationContext,
     get_conversation_context,
     MAX_CONTEXT_MESSAGES,
