@@ -6,6 +6,7 @@ This module contains all MCP tools:
 - complete_task: Toggle task completion status
 - delete_task: Permanently remove a task
 - update_task: Modify task title and/or description
+- find_task_by_name: Find a task by title or partial match
 """
 
 from .add_task import add_task
@@ -13,5 +14,6 @@ from .list_tasks import list_tasks
 from .complete_task import complete_task
 from .delete_task import delete_task
 from .update_task import update_task
+from .find_task_by_name import find_task_by_name
 
-__all__ = ["add_task", "list_tasks", "complete_task", "delete_task", "update_task"]
+__all__ = ["add_task", "list_tasks", "complete_task", "delete_task", "update_task", "find_task_by_name"]

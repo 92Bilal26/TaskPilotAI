@@ -86,8 +86,34 @@ class TaskAgent:
         logger.info(f"Processing message from user {user_id}: {message}")
 
         try:
-            # Build conversation history for context
-            messages = conversation_history or []
+            # Build conversation history with system instructions
+            messages = [
+                {
+                    "role": "system",
+                    "content": """You are a helpful task management assistant. When users mention a task by name (e.g., "delete task buy milk"), follow these steps:
+
+1. If you need the task ID and user mentions a task name:
+   - Call find_task_by_name with the task name first
+   - This returns the task_id you need
+   - Then use the task_id for delete_task, complete_task, or update_task
+
+2. Always provide clear confirmation of actions:
+   - For deleted tasks: confirm which task was deleted
+   - For completed tasks: show the updated status
+   - For lists: show all tasks with their status
+
+3. When user says "delete task [name]":
+   - Find the task first using find_task_by_name
+   - Then delete it using delete_task
+   - Confirm the deletion with the task title
+
+4. When user says "mark [name] complete" or "complete [name]":
+   - Find the task first
+   - Then toggle its completion status
+   - Confirm with the task title and new status""",
+                }
+            ]
+            messages.extend(conversation_history or [])
             messages.append({"role": "user", "content": message})
 
             # Call OpenAI with tools
@@ -143,6 +169,19 @@ class TaskAgent:
                             "description": "Filter tasks by completion status",
                         },
                     },
+                },
+            },
+            "find_task_by_name": {
+                "description": "Find a task by its title (exact or partial match). Use this when user mentions a task by name.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "name": {
+                            "type": "string",
+                            "description": "Task title or partial title to search for",
+                        },
+                    },
+                    "required": ["name"],
                 },
             },
             "complete_task": {
@@ -264,6 +303,18 @@ class TaskAgent:
                                         assistant_message = f"{message}\n{task_list_str}"
                                     else:
                                         assistant_message = message
+                                elif tool_name == "find_task_by_name":
+                                    # For find_task_by_name, provide confirmation with task details
+                                    if result.get("success"):
+                                        title = result.get("title", "Unknown")
+                                        completed = result.get("completed", False)
+                                        status = "✅ completed" if completed else "⏳ pending"
+                                        desc = result.get("description", "")
+                                        assistant_message = f"Found '{title}' ({status})"
+                                        if desc:
+                                            assistant_message += f"\n📝 {desc}"
+                                    else:
+                                        assistant_message = result.get("message", "Task not found")
                                 elif "message" in result:
                                     assistant_message = result["message"]
 
