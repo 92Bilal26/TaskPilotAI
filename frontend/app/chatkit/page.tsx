@@ -1,35 +1,23 @@
 /**
  * ChatKit Page
  *
- * Integrates OpenAI's ChatKit component for AI task management
- * Features:
- * - Thread-based conversation management
- * - Multi-turn AI interactions
- * - Task management through natural language
- * - Conversation history
+ * Integrates OpenAI's ChatKit React component for AI task management
+ * Uses the official @openai/chatkit-react package
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useChatKit, ChatKit } from '@openai/chatkit-react'
 import { chatKitConfig, validateChatKitConfig } from '@/lib/chatkit-config'
 import { useAuth } from '@/lib/useAuth'
-
-// Type declaration for ChatKit window object
-declare global {
-  interface Window {
-    OpenAIChatKit?: {
-      default?: any
-    }
-  }
-}
 
 export default function ChatKitPage() {
   const router = useRouter()
   const { isAuthenticated, isLoading } = useAuth()
   const [error, setError] = useState<string | null>(null)
-  const [mounted, setMounted] = useState(false)
+  const { control } = useChatKit(chatKitConfig)
 
   // Check authentication
   useEffect(() => {
@@ -47,62 +35,6 @@ export default function ChatKitPage() {
       )
     }
   }, [])
-
-  // Initialize ChatKit after mounting
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Load and initialize ChatKit
-  useEffect(() => {
-    if (!mounted || error || !isAuthenticated) return
-
-    const initChatKit = async () => {
-      try {
-        // Wait for ChatKit script to load
-        let attempts = 0
-        const maxAttempts = 50
-
-        while (!window.OpenAIChatKit && attempts < maxAttempts) {
-          await new Promise(resolve => setTimeout(resolve, 100))
-          attempts++
-        }
-
-        if (!window.OpenAIChatKit) {
-          setError('ChatKit library failed to load. Please refresh the page.')
-          return
-        }
-
-        // Initialize ChatKit
-        const container = document.getElementById('chatkit-container')
-        if (!container) {
-          setError('ChatKit container not found')
-          return
-        }
-
-        // Create ChatKit instance directly in the container
-        const chatKitElement = document.createElement('openai-chatkit')
-
-        // Set attributes
-        chatKitElement.setAttribute('style', 'width: 100%; height: 100%; display: block;')
-
-        // Set options through attributes
-        Object.entries(chatKitConfig.api).forEach(([key, value]) => {
-          if (typeof value === 'string') {
-            chatKitElement.setAttribute(`data-api-${key}`, value)
-          }
-        })
-
-        container.appendChild(chatKitElement)
-
-      } catch (err) {
-        console.error('Error initializing ChatKit:', err)
-        setError(`Failed to initialize ChatKit: ${String(err)}`)
-      }
-    }
-
-    initChatKit()
-  }, [mounted, error, isAuthenticated])
 
   if (isLoading) {
     return (
@@ -124,7 +56,7 @@ export default function ChatKitPage() {
       <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center max-w-md">
           <div className="text-red-600 text-lg font-semibold mb-2">
-            ChatKit Error
+            ChatKit Configuration Error
           </div>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
@@ -154,9 +86,9 @@ export default function ChatKitPage() {
         </button>
       </div>
 
-      {/* ChatKit Container */}
-      <div className="flex-1 overflow-hidden" id="chatkit-container">
-        {/* ChatKit web component will be injected here */}
+      {/* ChatKit Component */}
+      <div className="flex-1 overflow-hidden">
+        <ChatKit control={control} style={{ width: '100%', height: '100%' }} />
       </div>
     </div>
   )
