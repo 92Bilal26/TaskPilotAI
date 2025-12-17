@@ -34,6 +34,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
       className={`${inter.variable} ${playfair.variable}`}
     >
+      <head>
+        {/* ChatKit Web Component Script */}
+        <script
+          src="https://cdn.jsdelivr.net/npm/@openai/chatkit/dist/index.js"
+          async
+        />
+      </head>
       <body suppressHydrationWarning className="bg-color-background text-color-text transition-colors">
         {children}
       </body>
