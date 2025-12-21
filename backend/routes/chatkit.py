@@ -9,7 +9,6 @@ Architecture:
 
 from typing import AsyncIterator, Optional, Dict, Any
 from datetime import datetime, timedelta
-import json
 import logging
 import uuid
 
@@ -19,13 +18,13 @@ from chatkit.server import ChatKitServer
 from chatkit.store import Store
 from chatkit.types import (
     UserMessageItem, ThreadMetadata,
-    ErrorEvent, NoticeEvent, ThreadItemAddedEvent, WidgetItem
+    ErrorEvent, NoticeEvent, WidgetItem
 )
 from chatkit.widgets import Card, ListViewItem, Text, Title
 
 from sqlmodel import Session, select
 from db import get_session
-from models import Conversation, Message, ChatKitSession, Task, User
+from models import Conversation, Message, ChatKitSession
 from config import settings
 from task_agents.official_openai_agent import create_task_agent
 from task_agents.conversation_context import get_conversation_context
@@ -179,12 +178,15 @@ class MyChatKitServer(ChatKitServer):
                 )
                 return
 
-            logger.info(f"Processing ChatKit message for user: {user_id}, session: {thread.session_id}")
+            logger.info(
+                f"Processing ChatKit message for user: {user_id}, "
+                f"session: {thread.session_id}"
+            )
 
             # Extract message content
             if isinstance(input, UserMessageItem):
                 message_content = input.text
-            elif isinstance(input, ClientToolCallOutputItem):
+            elif hasattr(input, 'output'):
                 message_content = input.output
             else:
                 message_content = str(input)
@@ -250,12 +252,16 @@ class MyChatKitServer(ChatKitServer):
                         message=message_content,
                         conversation_history=conversation_history,
                     )
-                    logger.info(f"Agent response received: {len(agent_response.get('response', ''))} chars")
+                    response_len = len(agent_response.get('response', ''))
+                    logger.info(f"Agent response received: {response_len} chars")
 
                 except Exception as e:
                     logger.error(f"Agent processing failed: {e}")
                     agent_response = {
-                        "response": "I encountered an issue processing your request. Please try again.",
+                        "response": (
+                            "I encountered an issue processing your request. "
+                            "Please try again."
+                        ),
                         "tool_calls": [],
                         "status": "error",
                     }
@@ -285,7 +291,8 @@ class MyChatKitServer(ChatKitServer):
                     message=agent_response.get("response", "")
                 )
 
-                # Yield tool confirmations in hybrid format (text for simple ops, widgets for complex)
+                # Yield tool confirmations in hybrid format
+                # (text for simple ops, widgets for complex)
                 for tool_call in agent_response.get("tool_calls", []):
                     tool_name = tool_call.get("tool", "unknown")
 
@@ -518,8 +525,12 @@ class MyChatKitServer(ChatKitServer):
                 if i >= 10:  # Limit to 10 tasks
                     break
 
-                task_title = task.get("title", task.get("name", f"Task {i+1}")) if isinstance(task, dict) else str(task)
-                is_completed = task.get("completed", False) if isinstance(task, dict) else False
+                if isinstance(task, dict):
+                    task_title = task.get("title", task.get("name", f"Task {i+1}"))
+                    is_completed = task.get("completed", False)
+                else:
+                    task_title = str(task)
+                    is_completed = False
 
                 # Create visual indicator for completion status
                 status_icon = "✓" if is_completed else "○"
@@ -568,7 +579,8 @@ class MyChatKitServer(ChatKitServer):
         Implements hybrid approach:
         - Simple operations (add/delete/update/complete) → text confirmation with emoji
         - Find operations (find_task_by_name) → search result text
-        - Complex operations (list_tasks) → handled separately with widget (see _create_task_list_widget)
+        - Complex operations (list_tasks) → handled separately with widget
+          (see _create_task_list_widget)
 
         Args:
             tool_call: Tool execution record with keys: tool, result, status
@@ -598,11 +610,11 @@ class MyChatKitServer(ChatKitServer):
             if result:
                 return f"🔍 Found: {result}"
             else:
-                return f"🔍 No tasks found matching search"
+                return "🔍 No tasks found matching search"
 
         # List operations → handled separately (see _create_task_list_widget)
         if tool_name == "list_tasks":
-            return f"📋 Tasks list ready"
+            return "📋 Tasks list ready"
 
         # Default: text format
         return str(result) if result else f"✓ {tool_name} completed"
