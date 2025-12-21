@@ -149,11 +149,14 @@ class MyChatKitServer(ChatKitServer):
         input: UserMessageItem,
         context
     ) -> AsyncIterator[ErrorEvent | NoticeEvent]:
-        """Process user message and return AI response.
+        """Process user message and return AI response with user isolation.
 
-        Extracts user_id from context, fetches conversation history,
-        delegates to Agents SDK for processing, returns response with
-        tool confirmations in hybrid format.
+        T023: User Isolation Middleware
+        - Extracts user_id from JWT token context
+        - Verifies user has access to conversation (prevents cross-user access)
+        - Fetches conversation history for context
+        - Delegates to Agents SDK for processing
+        - Returns response with tool confirmations in hybrid format
 
         Args:
             thread: ChatKit thread metadata containing session info
@@ -161,10 +164,13 @@ class MyChatKitServer(ChatKitServer):
             context: Request context with user info
 
         Yields:
-            ChatKit NoticeEvent with message content
+            ChatKit NoticeEvent/ErrorEvent with message content
+
+        Raises:
+            ErrorEvent: If user not authenticated or conversation access denied
         """
         try:
-            # Extract user_id from context (JWT token)
+            # Extract user_id from context (JWT token) - T023
             user_id = getattr(context, 'user_id', None) or context.headers.get("X-User-ID")
             if not user_id:
                 yield ErrorEvent(
@@ -192,6 +198,10 @@ class MyChatKitServer(ChatKitServer):
                     session, thread.session_id, user_id
                 )
                 logger.info(f"Using conversation {conversation.id}")
+
+                # T023: Verify user isolation - ensure conversation belongs to this user
+                # This prevents users from accessing other users' conversations
+                self._verify_user_conversation_access(session, conversation.id, user_id)
 
                 # Store user message
                 user_msg = Message(
@@ -333,6 +343,50 @@ class MyChatKitServer(ChatKitServer):
             level='info',
             message="Action received"
         )
+
+    def _verify_user_conversation_access(
+        self,
+        session: Session,
+        conversation_id: int,
+        user_id: str
+    ) -> Conversation:
+        """Verify that user has access to conversation (User Isolation - T023).
+
+        T023: Implement user isolation middleware
+        - Validate that the conversation belongs to the requesting user
+        - Prevent users from accessing other users' conversations
+
+        Args:
+            session: Database session
+            conversation_id: Conversation ID to verify access for
+            user_id: User ID from JWT token
+
+        Returns:
+            Conversation object if user has access
+
+        Raises:
+            HTTPException: 404 if conversation not found, 403 if not authorized
+        """
+        stmt = select(Conversation).where(Conversation.id == conversation_id)
+        conversation = session.exec(stmt).first()
+
+        if not conversation:
+            logger.warning(f"Conversation {conversation_id} not found")
+            raise HTTPException(status_code=404, detail="Conversation not found")
+
+        # T023: Check user isolation - user can only access their own conversations
+        if conversation.user_id != user_id:
+            logger.warning(
+                f"Unauthorized access: user {user_id} tried to access "
+                f"conversation {conversation_id} owned by {conversation.user_id}"
+            )
+            raise HTTPException(
+                status_code=403,
+                detail="Unauthorized: conversation belongs to different user"
+            )
+
+        logger.debug(f"User {user_id} verified access to conversation {conversation_id}")
+        return conversation
 
     def _get_or_create_conversation(
         self,
