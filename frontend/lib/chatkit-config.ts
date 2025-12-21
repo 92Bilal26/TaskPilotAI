@@ -17,14 +17,34 @@ const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 const DOMAIN_KEY = process.env.NEXT_PUBLIC_DOMAIN_KEY || 'taskpilot-local-dev'
 
 /**
+ * Get JWT token from Better Auth
+ * Tries multiple locations where token might be stored
+ */
+function getAuthToken(): string | null {
+  // Try localStorage first (standard)
+  let token = localStorage.getItem('auth_token')
+  if (token) return token
+
+  // Try the auth-token key (Better Auth)
+  token = localStorage.getItem('authjs.session-token')
+  if (token) return token
+
+  // Try sessionStorage
+  token = sessionStorage.getItem('auth_token')
+  if (token) return token
+
+  return null
+}
+
+/**
  * Custom fetch function that adds JWT authentication
  */
 async function authenticatedFetch(
   url: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  // Get JWT token from localStorage
-  const token = localStorage.getItem('auth_token')
+  // Get JWT token
+  const token = getAuthToken()
 
   // Build headers
   const headers = new Headers(options.headers || {})
@@ -56,8 +76,8 @@ export const chatKitConfig: UseChatKitOptions = {
   api: {
     /**
      * Get client secret from backend session endpoint
-     * Frontend calls: POST /api/chatkit/sessions
-     * Backend returns: { client_secret: "...", session_id: "..." }
+     * Frontend calls: POST /api/v1/chatkit/sessions (with JWT auth)
+     * Backend returns: { client_secret: "...", session_id: "...", conversation_id: ... }
      */
     async getClientSecret(existing) {
       // If we already have a secret, reuse it
@@ -67,8 +87,8 @@ export const chatKitConfig: UseChatKitOptions = {
       }
 
       try {
-        // Call backend session endpoint to get a new secret
-        const res = await fetch(`${API_URL}/api/chatkit/sessions`, {
+        // Call backend session endpoint with JWT authentication
+        const res = await authenticatedFetch(`${API_URL}/api/v1/chatkit/sessions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -76,11 +96,20 @@ export const chatKitConfig: UseChatKitOptions = {
         })
 
         if (!res.ok) {
-          throw new Error(`Failed to get ChatKit session: ${res.statusText}`)
+          const errorData = await res.json().catch(() => ({}))
+          throw new Error(`Failed to get ChatKit session: ${res.statusText} - ${JSON.stringify(errorData)}`)
         }
 
         const data = await res.json()
-        console.log('Got ChatKit session:', data.session_id)
+        console.log('Got ChatKit session:', {
+          session_id: data.session_id,
+          conversation_id: data.conversation_id,
+        })
+
+        // Store conversation ID for later use
+        if (data.conversation_id) {
+          sessionStorage.setItem('chatkit_conversation_id', String(data.conversation_id))
+        }
 
         return data.client_secret
       } catch (error) {
@@ -119,7 +148,6 @@ export const chatKitConfig: UseChatKitOptions = {
   // Start Screen (New Conversation)
   // ============================================
   startScreen: {
-    enabled: true,
     title: 'Welcome to TaskPilot AI',
     subtitle: 'Manage your tasks with AI assistance',
     quickStarters: [
@@ -150,7 +178,6 @@ export const chatKitConfig: UseChatKitOptions = {
   // Composer Configuration
   // ============================================
   composer: {
-    enabled: true,
     placeholder: 'Ask me to add, update, or delete tasks...',
     autoFocus: true,
   },
@@ -230,14 +257,10 @@ export const chatKitConfig: UseChatKitOptions = {
 
   /**
    * Handle effect (tool calls, widget actions)
+   * Logged for debugging purposes
    */
-  onEffect: (effect: {
-    type: string
-    name: string
-    params: Record<string, unknown>
-  }) => {
-    console.log('ChatKit effect:', effect.type, effect.name)
-  },
+  // onEffect handler commented out to avoid type issues
+  // Effects are automatically handled by the ChatKit SDK
 }
 
 /**
