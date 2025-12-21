@@ -26,11 +26,21 @@ class Task(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     user: User = Relationship(back_populates="tasks")
 
+class ChatKitSession(SQLModel, table=True):
+    """ChatKit session linked to a conversation for persistence"""
+    session_id: str = Field(primary_key=True)  # Unique session ID from ChatKit SDK
+    thread_id: Optional[str] = None  # ChatKit internal thread identifier
+    user_id: str = Field(foreign_key="user.id", index=True)
+    conversation_id: Optional[int] = Field(foreign_key="conversation.id", index=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
+    expires_at: Optional[datetime] = None  # Session expiration time
+
 class Conversation(SQLModel, table=True):
     """Chat session between user and chatbot"""
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: str = Field(foreign_key="user.id", index=True)
     title: Optional[str] = Field(default=None, max_length=200)
+    chatkit_session_id: Optional[str] = Field(default=None, index=True)  # Link to ChatKit session
     created_at: datetime = Field(default_factory=datetime.utcnow, index=True)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     archived: bool = Field(default=False, index=True)

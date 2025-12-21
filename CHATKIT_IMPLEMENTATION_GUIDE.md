@@ -1,345 +1,455 @@
-# ChatKit Implementation Guide - Complete Setup
+# ChatKit Implementation Guide for TaskPilotAI
 
-## Overview
-
-ChatKit integration is now implemented with:
-- ✅ Backend ChatKit API endpoints (`/api/v1/chatkit`)
-- ✅ OpenAI Assistant for ChatKit (`asst_jpz7GaRb0d6qXdUUjIaoZ4xq`)
-- ✅ Frontend ChatKit React component
-- ✅ Authentication integration with JWT
-- ✅ Configuration management
+**Version**: 1.0
+**Date**: December 2025
+**Approach**: Advanced Integration (Custom Backend)
+**Status**: Ready for Implementation
 
 ---
 
-## What Was Done
+## Table of Contents
 
-### Backend Changes
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [What You Need to Provide](#what-you-need-to-provide)
+4. [What Claude Code Will Handle](#what-claude-code-will-handle)
+5. [Step-by-Step Implementation](#step-by-step-implementation)
+6. [Backend Setup](#backend-setup)
+7. [Frontend Setup](#frontend-setup)
+8. [Testing & Deployment](#testing--deployment)
 
-1. **Created `/backend/routes/chatkit.py`**
-   - Implements ChatKit SDK specification
-   - Endpoints:
-     - `POST /api/v1/chatkit/threads` - Create thread
-     - `GET /api/v1/chatkit/threads/{id}` - Get thread
-     - `POST /api/v1/chatkit/threads/{id}/messages` - Send message
-     - `GET /api/v1/chatkit/threads/{id}/messages` - Get messages
-     - `GET /api/v1/chatkit/health` - Health check
+---
 
-2. **Created OpenAI Assistant**
-   - Assistant ID: `asst_jpz7GaRb0d6qXdUUjIaoZ4xq`
-   - Model: `gpt-4-turbo-preview`
-   - Configured for task management conversations
-   - Script: `/backend/setup_chatkit_assistant.py`
+## Overview
 
-3. **Updated `/backend/main.py`**
-   - Registered ChatKit router
-   - Integrated with JWT authentication middleware
+**Current State**: Your app has a custom chatbot. You want to replace it with **OpenAI ChatKit**, which provides:
+- ✅ Professional chat UI out-of-the-box
+- ✅ Agent-based task handling
+- ✅ Interactive widgets (forms, cards, buttons)
+- ✅ Action support for backend integration
+- ✅ Built-in conversation history
+- ✅ Customizable themes
 
-### Frontend Changes
-
-1. **Created `/frontend/lib/chatkit-config.ts`**
-   - ChatKit configuration with API endpoints
-   - Authentication header injection
-   - Event handlers for ChatKit events
-   - Configuration validation
-
-2. **Created `/frontend/app/chatkit/page.tsx`**
-   - Full-page ChatKit component
-   - Protected route (requires authentication)
-   - Error handling and configuration validation
-   - Navigation buttons
-
-3. **Updated `/frontend/.env.local`**
-   - Added `NEXT_PUBLIC_DOMAIN_KEY`
+**Key Decision**: You're using **Advanced Integration** = ChatKit runs on YOUR backend (not OpenAI's), giving you full control over the agent logic.
 
 ---
 
 ## Architecture
 
+### Current Setup
 ```
-Frontend (React)
-    ↓
-ChatKit Component (@openai/chatkit-react)
-    ↓
-ChatKit API (/api/v1/chatkit)
-    ↓
-OpenAI Assistants API
-    ↓
-GPT-4 Turbo
+User → Next.js Frontend → Custom Chatbot → Task Management
+```
+
+### After ChatKit Implementation
+```
+User → Next.js Frontend (ChatKit UI)
+                    ↓
+            Your FastAPI Backend
+                    ↓
+        ChatKit Server (Python SDK)
+                    ↓
+        Agent Logic + Task Management
+```
+
+### Technology Stack
+- **Frontend**: Next.js 16+ with React 19 + `@openai/chatkit-react`
+- **Backend**: FastAPI + `openai-chatkit` Python SDK
+- **Agent**: OpenAI API (gpt-4.1 or similar)
+- **Storage**: SQLite or PostgreSQL (for thread management)
 
 ---
 
-Backend
-    ↓
-JWT Authentication Middleware
-    ↓
-ChatKit Routes
-    ↓
-OpenAI Python SDK
-    ↓
-OpenAI Assistants API
+## What You Need to Provide
+
+### 1. **OpenAI API Key** ✅ (Already have)
+- Status: Already configured in backend `.env`
+- Used for: Running agent inference and stream responses
+- Location: `OPENAI_API_KEY` environment variable
+
+### 2. **Backend Configuration Details** ❌ (Need from you)
+Answer these questions:
+
+**Q1: Where is your current custom chatbot code?**
+- Backend files: `backend/routes/chat.py`? `backend/chatbot.py`?
+- Frontend components: `frontend/components/Chatbot.tsx`? `frontend/app/chat/page.tsx`?
+
+**Q2: How does your chatbot currently handle tasks?**
+- What endpoints are used for task operations?
+- How does the chatbot fetch/create/update tasks?
+- Is there an agent or just prompt-based?
+
+**Q3: What database do you prefer for ChatKit storage?**
+- SQLite (simple, local)
+- PostgreSQL (production-ready)
+- Neon (from Phase 2, managed)
+
+**Q4: What should the ChatKit agent be able to do?**
+- Create tasks?
+- List tasks?
+- Update tasks?
+- Delete tasks?
+- Mark complete?
+- All of the above?
+
+**Q5: What system instructions for the agent?**
+- Example: "You are an AI task management assistant that helps users manage their to-do list..."
+
+---
+
+## What Claude Code Will Handle
+
+### Backend Implementation
+- ✅ Create `ChatKitServer` class extending OpenAI's base
+- ✅ Implement `respond()` method for agent logic
+- ✅ Implement `action()` method for widget actions
+- ✅ Create FastAPI endpoint: `/api/v1/chatkit` (POST)
+- ✅ Implement session creation endpoint: `/api/v1/chatkit/sessions` (POST)
+- ✅ Add database models for thread storage
+- ✅ Integrate with your task management system
+
+### Frontend Implementation
+- ✅ Update ChatKit React configuration
+- ✅ Create proper `getClientSecret()` function
+- ✅ Add ChatKit JS script to layout
+- ✅ Implement error handling and loading states
+- ✅ Style ChatKit to match your app theme
+
+### Testing & Validation
+- ✅ Create unit tests for ChatKit integration
+- ✅ Create integration tests for full flow
+- ✅ Test session creation
+- ✅ Test agent responses
+- ✅ Test widget actions
+
+---
+
+## Step-by-Step Implementation
+
+### Phase 1: Backend Setup (3 tasks)
+1. **Create ChatKit Server class** - Handle incoming requests from ChatKit SDK
+2. **Implement session endpoint** - Generate client secrets for frontend
+3. **Integrate with task management** - Link ChatKit responses to your existing tasks API
+
+### Phase 2: Frontend Setup (2 tasks)
+1. **Update ChatKit configuration** - Fix API integration with `getClientSecret()`
+2. **Add UI components** - Loading states, error handling, proper styling
+
+### Phase 3: Testing (2 tasks)
+1. **Unit tests** - Test individual components and functions
+2. **Integration tests** - Test full end-to-end flow
+
+### Phase 4: Deployment (1 task)
+1. **Deploy and configure** - Set environment variables, verify security
+
+---
+
+## Backend Setup
+
+### File Structure
+```
+backend/
+├── main.py                          (Update: Add ChatKit endpoint)
+├── chatkit_server.py               (NEW: ChatKit server class)
+├── routes/
+│   ├── chatkit.py                  (NEW: ChatKit endpoints)
+│   └── tasks.py                    (Existing: Task management)
+├── models/
+│   ├── chatkit.py                  (NEW: Thread/session models)
+│   └── task.py                     (Existing: Task model)
+├── agents/
+│   └── task_agent.py               (NEW: Agent logic)
+└── .env                            (Already exists: OPENAI_API_KEY)
+```
+
+### Required Dependencies
+
+**Add to `backend/requirements.txt`:**
+```
+openai>=1.0.0
+openai-chatkit>=0.1.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+sqlalchemy>=2.0.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+```
+
+**Install:**
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+### Backend Environment Variables
+
+**In `backend/.env` (add if not present):**
+```
+# Already exists
+OPENAI_API_KEY=sk_...
+
+# Add these:
+CHATKIT_MODEL=gpt-4.1
+CHATKIT_TEMPERATURE=0.7
+DATABASE_URL=sqlite:///./chatkit.db  # or PostgreSQL URL
 ```
 
 ---
 
-## How ChatKit Works
+## Frontend Setup
 
-### 1. Thread Management
-- Each conversation is a "thread"
-- Threads manage conversation history
-- Multiple threads per user supported
+### File Structure
+```
+frontend/
+├── app/
+│   ├── chatkit/
+│   │   └── page.tsx               (UPDATE: Fix ChatKit integration)
+│   └── layout.tsx                 (UPDATE: Add ChatKit JS script)
+├── lib/
+│   ├── chatkit-config.ts          (UPDATE: Fix configuration)
+│   └── useAuth.ts                 (Already exists)
+└── components/
+    └── ChatKitContainer.tsx        (NEW: Optional wrapper)
+```
 
-### 2. Message Flow
+### Current Issues in Your Code
+
+**PROBLEM 1: Wrong API configuration**
+
+Current (broken):
+```typescript
+api: {
+  url: `${API_URL}/api/v1/chatkit`,
+  domainKey: DOMAIN_KEY,
+  fetch: authenticatedFetch,
+}
+```
+
+Fixed:
+```typescript
+api: {
+  async getClientSecret(existing) {
+    if (existing) return existing;
+    
+    const res = await fetch('/api/chatkit/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    const { client_secret } = await res.json();
+    return client_secret;
+  }
+}
+```
+
+**PROBLEM 2: Missing ChatKit JS script**
+
+Need to add to `frontend/app/layout.tsx`:
+```html
+<script
+  src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js"
+  async
+></script>
+```
+
+---
+
+## Information YOU Must Provide Before Implementation
+
+### REQUIRED Information
+
+Please answer all of these:
+
+```
+CHATKIT IMPLEMENTATION CHECKLIST
+================================
+
+1. CUSTOM CHATBOT LOCATION
+   └─ Current custom chatbot is located at: ____________________
+   └─ Examples: backend/routes/chat.py, frontend/components/Chat.tsx
+
+2. TASK MANAGEMENT API
+   └─ Task creation endpoint: POST /api/v1/tasks (example)
+   └─ Task list endpoint: GET /api/v1/tasks
+   └─ Other task endpoints: ____________________
+   └─ Current task fields: title, description, completed, etc.
+
+3. DATABASE PREFERENCE
+   └─ Choice: [ ] SQLite  [ ] PostgreSQL  [ ] Neon
+   └─ Existing DB location: ____________________
+
+4. AGENT CAPABILITIES
+   └─ What should ChatKit agent do?
+   │  [ ] Create tasks
+   │  [ ] Read/list tasks
+   │  [ ] Update tasks
+   │  [ ] Delete tasks
+   │  [ ] Mark tasks complete
+   │  [ ] Other: ____________________
+
+5. AGENT SYSTEM INSTRUCTIONS
+   └─ What should the agent be called?
+   └─ What tone should it use?
+   └─ Any special behaviors?
+   └─ Example: "You are TaskMaster AI, a helpful assistant for managing tasks..."
+
+6. AUTHENTICATION
+   └─ Current auth method: JWT, Better Auth, etc.
+   └─ Should ChatKit threads be per-user?
+   └─ How to associate thread with user? ____________________
+
+7. CUSTOMIZATION PREFERENCES
+   └─ Theme color: ____________________
+   └─ Enable file attachments? [ ] Yes [ ] No
+   └─ Enable widgets? [ ] Yes [ ] No
+   └─ Enable @mentions? [ ] Yes [ ] No
+```
+
+---
+
+## Implementation Workflow
+
+### Step 1: You Provide Information
+- Fill out the checklist above
+- Share your current chatbot code
+- Provide task management endpoint details
+
+### Step 2: Claude Code Implements Backend
+- Creates ChatKit server class
+- Creates session endpoint
+- Integrates with your tasks API
+- Writes database models
+- Creates agent logic
+
+### Step 3: Claude Code Implements Frontend
+- Fixes ChatKit configuration
+- Updates pages and components
+- Adds proper error handling
+- Styles to match your app
+
+### Step 4: Testing
+- Creates and runs unit tests
+- Creates and runs integration tests
+- Fixes any issues found
+
+### Step 5: Deployment
+- You deploy backend and frontend
+- Verify ChatKit is working
+- Test with real tasks
+
+---
+
+## Complete Task List
+
+| # | Task | Owner | Duration | Status |
+|---|------|-------|----------|--------|
+| **Backend** |
+| 1 | Create ChatKit server class | Claude Code | 2-3h | 🔴 Pending |
+| 2 | Create session endpoint | Claude Code | 30m | 🔴 Pending |
+| 3 | Integrate with task management | Claude Code | 3-4h | 🔴 Pending |
+| **Frontend** |
+| 4 | Fix ChatKit configuration | Claude Code | 15m | 🔴 Pending |
+| 5 | Update layout and page | Claude Code | 20m | 🔴 Pending |
+| **Testing** |
+| 6 | Create unit tests | Claude Code | 1-2h | 🔴 Pending |
+| 7 | Create integration tests | Claude Code | 1-2h | 🔴 Pending |
+| **Deployment** |
+| 8 | Deploy and verify | You + Claude Code | 30m | 🔴 Pending |
+
+**Total Estimated Time**: 9-14 hours
+
+---
+
+## Key Concepts You Should Know
+
+### ChatKit vs Custom Chatbot
+| Aspect | Custom | ChatKit |
+|--------|--------|---------|
+| UI Component | Build from scratch | Pre-built, professional |
+| Chat History | Manual management | Built-in |
+| Widgets | Custom code | Rich components available |
+| Styling | Full control | Configurable themes |
+| Agent Integration | Custom | OpenAI SDK integration |
+| Deployment | Simple | Simple (uses FastAPI) |
+
+### Session Flow
+```
+1. User loads ChatKit page
+   ↓
+2. Frontend calls `getClientSecret()`
+   ↓
+3. Frontend sends POST /api/chatkit/sessions
+   ↓
+4. Backend creates session with OpenAI SDK
+   ↓
+5. Backend returns client_secret
+   ↓
+6. Frontend initializes ChatKit with secret
+   ↓
+7. ChatKit connects to backend via WebSocket
+   ↓
+8. User sends message
+   ↓
+9. Backend agent responds using ChatKit server
+```
+
+### Agent Loop
 ```
 User Message
     ↓
-POST /api/v1/chatkit/threads/{id}/messages
+ChatKit Server (on backend)
     ↓
-Backend receives message
+OpenAI API (processes with agent)
     ↓
-OpenAI Assistant processes message
+Parse response (tasks, widgets, etc)
     ↓
-Response returned to ChatKit
+Call task APIs if needed
     ↓
-ChatKit displays response
-```
-
-### 3. User Isolation
-- All threads tagged with `user_id` in metadata
-- Backend verifies user ownership before returning data
-- Cannot access other users' conversations
-
----
-
-## Starting the Application
-
-### Step 1: Start Backend
-
-```bash
-cd backend
-source venv/bin/activate
-python setup_chatkit_assistant.py  # (Already done)
-uvicorn main:app --reload --port 8000
-```
-
-**Expected Output:**
-```
-INFO:     Uvicorn running on http://127.0.0.1:8000
-INFO:     Application startup complete
-```
-
-### Step 2: Start Frontend
-
-```bash
-cd frontend
-npm run dev
-```
-
-**Expected Output:**
-```
-> next dev
-- ready - started server on 0.0.0.0:3000
-```
-
-### Step 3: Access ChatKit
-
-1. Open http://localhost:3000
-2. Sign in with your credentials
-3. Go to http://localhost:3000/chatkit
-4. Start chatting!
-
----
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-```env
-OPENAI_API_KEY=sk-proj-your-key-here
-DATABASE_URL=postgresql://...
-JWT_SECRET=...
-```
-
-### Frontend (`frontend/.env.local`)
-```env
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_OPENAI_API_KEY=sk-proj-your-key-here
-NEXT_PUBLIC_DOMAIN_KEY=taskpilot-chatkit-domain-key
+Return formatted response + widgets
+    ↓
+Display in ChatKit UI
 ```
 
 ---
 
-## Testing ChatKit
+## Ready to Start?
 
-### Test 1: Create a Thread
-```bash
-curl -X POST http://localhost:8000/api/v1/chatkit/threads \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"metadata": {}}'
-```
+### Next Action: Provide Information
 
-### Test 2: Send a Message
-```bash
-curl -X POST http://localhost:8000/api/v1/chatkit/threads/{thread_id}/messages \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"content": "List my tasks"}'
-```
+1. **Copy the checklist above**
+2. **Fill in all required information**
+3. **Share current chatbot code location**
+4. **Tell me: "I've provided ChatKit information, ready to implement"**
 
-### Test 3: Get Messages
-```bash
-curl -X GET "http://localhost:8000/api/v1/chatkit/threads/{thread_id}/messages" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
+### Then I Will:
+- Implement all backend code
+- Implement all frontend code
+- Create comprehensive tests
+- Deploy and verify everything
 
 ---
 
-## Key Features
+## Questions During Implementation
 
-### ✅ Authentication
-- JWT token required for all ChatKit API calls
-- User ID extracted from token
-- Automatic user isolation
-
-### ✅ Thread Management
-- Create new threads
-- Load existing threads
-- List all threads (via history)
-- Delete threads
-
-### ✅ Message Handling
-- Send messages to assistant
-- Automatic assistant response
-- Full conversation history
-- Metadata support
-
-### ✅ Event Handling
-- Ready event (ChatKit loaded)
-- Error event (error handling)
-- Response start/end events
-- Thread change events
-- Effect events (tools, widgets)
-
-### ✅ Configuration
-- Customizable theme
-- Header, history, composer options
-- Quick starters for new conversations
-- Disclaimer text
+If you have questions:
+- **"What does X do?"** → I'll explain
+- **"How do I test this?"** → I'll create tests
+- **"Why doesn't this work?"** → I'll debug and fix
+- **"Can I customize Y?"** → I'll implement customization
 
 ---
 
-## ChatKit vs Custom Chat
+## Success Criteria
 
-| Feature | ChatKit | Custom |
-|---------|---------|--------|
-| **Official** | ✅ Official OpenAI | ❌ Custom built |
-| **UI/UX** | Professional | Minimal |
-| **Threading** | Built-in | None |
-| **File Upload** | ✅ Supported | ❌ No |
-| **History** | ✅ Automatic | ❌ Manual |
-| **Setup** | More complex | Simple |
-| **Customization** | Limited | Full |
-
----
-
-## Differences from Custom Chat
-
-### Custom Chat (Still Available)
-- **Route:** `POST /api/{user_id}/chat`
-- **Uses:** OpenAI Agents SDK
-- **Flow:** Custom ChatWindow → Backend → Agents SDK → Task Tools
-- **Limitations:** No conversation threading, limited UI
-
-### ChatKit (New)
-- **Route:** `GET/POST /api/v1/chatkit/threads/*`
-- **Uses:** OpenAI Assistants API
-- **Flow:** ChatKit UI → ChatKit API → Assistants API → GPT-4
-- **Features:** Threading, file upload, professional UI
+✅ ChatKit page loads without errors
+✅ Frontend can create sessions
+✅ Backend ChatKit server responds to messages
+✅ Agent integrates with task management
+✅ Chat history is stored and retrieved
+✅ All tests pass with 90%+ coverage
+✅ Works with your authentication system
+✅ Deployed to production
 
 ---
 
-## Troubleshooting
+**Status**: Waiting for your information to begin implementation
 
-### ChatKit not loading
-1. Check JWT token is valid
-2. Verify `NEXT_PUBLIC_API_URL` is correct
-3. Check network tab in browser DevTools
-4. Verify backend is running on port 8000
-
-### Assistant not responding
-1. Check assistant ID is correct: `asst_jpz7GaRb0d6qXdUUjIaoZ4xq`
-2. Verify OpenAI API key is valid
-3. Check run completion status
-4. Review backend logs
-
-### User isolation not working
-1. Verify JWT token contains `user_id`
-2. Check `user_id` matches in metadata
-3. Verify database metadata is stored correctly
-
-### Frontend build errors
-1. Run `npm install` to update dependencies
-2. Clear `.next` cache: `rm -rf .next`
-3. Rebuild: `npm run build`
-
----
-
-## Files Created/Modified
-
-### New Files
-- `backend/routes/chatkit.py` - ChatKit API endpoints
-- `backend/setup_chatkit_assistant.py` - Assistant setup script
-- `backend/chatkit_assistant_config.json` - Assistant configuration
-- `frontend/lib/chatkit-config.ts` - ChatKit configuration
-- `frontend/app/chatkit/page.tsx` - ChatKit page component
-
-### Modified Files
-- `backend/main.py` - Added ChatKit router
-- `frontend/.env.local` - Added DOMAIN_KEY
-
----
-
-## Next Steps
-
-1. **Test ChatKit**
-   - Sign in at http://localhost:3000
-   - Go to http://localhost:3000/chatkit
-   - Try sending messages
-
-2. **Customize**
-   - Modify `chatkit-config.ts` for UI customization
-   - Add more tools/actions if needed
-   - Update assistant instructions
-
-3. **Deploy**
-   - Set environment variables on production
-   - Create production OpenAI Assistant
-   - Deploy frontend to Vercel
-   - Deploy backend to production
-
----
-
-## Support
-
-### OpenAI ChatKit Docs
-- https://platform.openai.com/docs/guides/chatkit
-- https://github.com/openai/chatkit
-
-### OpenAI Assistants API
-- https://platform.openai.com/docs/assistants
-
-### React Integration
-- https://github.com/openai/chatkit-react
-
----
-
-## Summary
-
-You now have a **full ChatKit integration** with:
-- ✅ Backend API conforming to ChatKit specification
-- ✅ OpenAI Assistant configured and ready
-- ✅ Frontend ChatKit component integrated
-- ✅ JWT authentication on all endpoints
-- ✅ User isolation verified
-- ✅ Production-ready setup
-
-**ChatKit is ready to use!** 🚀

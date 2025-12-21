@@ -816,3 +816,10 @@ All endpoints require: `Authorization: Bearer <jwt_token>`
 **Status**: Phase 2 Specifications Created
 **Current Phase**: Phase 2 (Full-Stack Web Application)
 **Next**: Implement Backend (FastAPI)
+
+## Active Technologies
+- Python 3.11+, TypeScript/React 19 (005-chatkit-integration)
+- Neon PostgreSQL (existing Phase 2 database) (005-chatkit-integration)
+
+## Recent Changes
+- 005-chatkit-integration: Added Python 3.11+, TypeScript/React 19

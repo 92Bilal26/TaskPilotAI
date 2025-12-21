@@ -12,6 +12,18 @@ class Settings(BaseSettings):
     JWT_REFRESH_EXPIRY_SECONDS: int = 1209600
     BETTER_AUTH_SECRET: str = "dev-secret-key"
     OPENAI_API_KEY: str = "sk-test-key"  # Required for OpenAI integration
+    CHATKIT_WORKFLOW_ID: str = "wf_6946b383d368819081b556e6e5fa66330d48d0c9ea4fccd8"  # OpenAI Agent Builder Workflow ID
+    # ChatKit Configuration for Advanced Self-Hosted Integration
+    CHATKIT_ENABLED: bool = True
+    CHATKIT_SESSION_TIMEOUT: int = 3600  # 1 hour session timeout in seconds
+    CHATKIT_MAX_HISTORY: int = 10  # Maximum conversation history messages to send to agent
+    CHATKIT_DOMAIN_ALLOWLIST: List[str] = [
+        "localhost:3000",
+        "localhost:8000",
+        "127.0.0.1:3000",
+        "task-pilot-ai-ashen.vercel.app",
+        "taskpilot-api-5l18.onrender.com"
+    ]
     CORS_ORIGINS: List[str] = [
         "http://localhost:3000",
         "http://localhost:8000",

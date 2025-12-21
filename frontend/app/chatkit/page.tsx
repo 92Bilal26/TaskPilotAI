@@ -17,17 +17,27 @@ export default function ChatKitPage() {
   const router = useRouter()
   const { isAuthenticated, isLoading } = useAuth()
   const [error, setError] = useState<string | null>(null)
-  const { control } = useChatKit(chatKitConfig)
+  const [isMounted, setIsMounted] = useState(false)
 
-  // Check authentication
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/auth/signin')
-    }
-  }, [isAuthenticated, isLoading, router])
+  // Early return if not authenticated to avoid hook violations
+  if (!isAuthenticated && !isLoading) {
+    return null
+  }
 
-  // Validate ChatKit configuration
+  // Call hook at top level (must be done before any conditional returns)
+  let chatKitResult
+  try {
+    chatKitResult = useChatKit(chatKitConfig)
+    console.log('useChatKit result:', chatKitResult)
+  } catch (e: any) {
+    console.error('ChatKit hook error:', e)
+  }
+
+  // Validate ChatKit configuration and set mounted state
   useEffect(() => {
+    setIsMounted(true)
+    console.log('ChatKit page mounted, config:', chatKitConfig)
+
     const validation = validateChatKitConfig()
     if (!validation.valid) {
       setError(
@@ -70,10 +80,23 @@ export default function ChatKitPage() {
     )
   }
 
+  if (!chatKitResult) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="text-center max-w-md">
+          <p className="text-gray-600 mb-4">Initializing ChatKit...</p>
+          <p className="text-xs text-gray-500">Check console for details</p>
+        </div>
+      </div>
+    )
+  }
+
+  const { control } = chatKitResult
+
   return (
-    <div className="flex flex-col h-screen bg-white">
+    <div className="flex flex-col h-screen bg-white" style={{ overflow: 'hidden' }}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 shadow-md flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 shadow-md flex items-center justify-between flex-shrink-0">
         <div>
           <h1 className="text-2xl font-bold">TaskPilot AI Chat</h1>
           <p className="text-blue-100 text-sm">Powered by OpenAI ChatKit</p>
@@ -86,9 +109,18 @@ export default function ChatKitPage() {
         </button>
       </div>
 
-      {/* ChatKit Component */}
-      <div className="flex-1 overflow-hidden">
-        <ChatKit control={control} style={{ width: '100%', height: '100%' }} />
+      {/* ChatKit Component - Full Height */}
+      <div className="flex-1 overflow-hidden" style={{ display: 'flex', flexDirection: 'column', width: '100%' }}>
+        {isMounted && control && (
+          <ChatKit
+            control={control}
+            style={{
+              width: '100%',
+              height: '100%',
+              flex: 1,
+            }}
+          />
+        )}
       </div>
     </div>
   )

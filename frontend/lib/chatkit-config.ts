@@ -54,14 +54,40 @@ export const chatKitConfig: UseChatKitOptions = {
   // API Configuration (REQUIRED)
   // ============================================
   api: {
-    // ChatKit backend endpoint
-    url: `${API_URL}/api/v1/chatkit`,
+    /**
+     * Get client secret from backend session endpoint
+     * Frontend calls: POST /api/chatkit/sessions
+     * Backend returns: { client_secret: "...", session_id: "..." }
+     */
+    async getClientSecret(existing) {
+      // If we already have a secret, reuse it
+      if (existing) {
+        console.log('Reusing existing ChatKit client secret')
+        return existing
+      }
 
-    // Domain key for verification
-    domainKey: DOMAIN_KEY,
+      try {
+        // Call backend session endpoint to get a new secret
+        const res = await fetch(`${API_URL}/api/chatkit/sessions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
 
-    // Custom fetch function with authentication
-    fetch: authenticatedFetch,
+        if (!res.ok) {
+          throw new Error(`Failed to get ChatKit session: ${res.statusText}`)
+        }
+
+        const data = await res.json()
+        console.log('Got ChatKit session:', data.session_id)
+
+        return data.client_secret
+      } catch (error) {
+        console.error('Error getting ChatKit session:', error)
+        throw error
+      }
+    },
   },
 
   // ============================================

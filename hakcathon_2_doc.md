@@ -907,7 +907,7 @@ Can Spec-Driven Development be used for infrastructure automation, and how we ma
 
 # **Phase V: Advanced Cloud Deployment**
 
-*Advanced Level Functionality on DigitalOcean Kubernetes or Google Cloud (GKE) or Azure (AKS)*
+*Advanced Level Functionality on Azure (AKS) or Google Cloud (GKE) or Azure (AKS)*
 
 **Objective:** Implement advanced features and deploy first on Minikube locally and then to production-grade Kubernetes on Azure/Google Cloud/Oracle and Kafka within Kubernetes Cluster or with a managed service like Redpanda Cloud.
 
