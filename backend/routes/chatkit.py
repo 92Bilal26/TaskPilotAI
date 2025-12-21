@@ -19,8 +19,9 @@ from chatkit.server import ChatKitServer
 from chatkit.store import Store
 from chatkit.types import (
     UserMessageItem, ThreadMetadata,
-    ErrorEvent, NoticeEvent, ThreadItemAddedEvent
+    ErrorEvent, NoticeEvent, ThreadItemAddedEvent, WidgetItem
 )
+from chatkit.widgets import Card, ListViewItem, Text, Title
 
 from sqlmodel import Session, select
 from db import get_session
@@ -274,13 +275,30 @@ class MyChatKitServer(ChatKitServer):
                     message=agent_response.get("response", "")
                 )
 
-                # Yield tool confirmations in hybrid format
+                # Yield tool confirmations in hybrid format (text for simple ops, widgets for complex)
                 for tool_call in agent_response.get("tool_calls", []):
-                    tool_response = self._format_tool_result(tool_call)
-                    yield NoticeEvent(
-                        level='info',
-                        message=str(tool_response)
-                    )
+                    tool_name = tool_call.get("tool", "unknown")
+
+                    # Check if this is a widget-based tool (list_tasks)
+                    if tool_name == "list_tasks":
+                        # Generate Card widget for list_tasks
+                        widget = self._create_task_list_widget(tool_call)
+                        if widget:
+                            # Convert widget to WidgetItem and yield
+                            yield widget
+                        else:
+                            # Fallback to text if widget generation fails
+                            yield NoticeEvent(
+                                level='warning',
+                                message=str(tool_call.get("result", "No tasks"))
+                            )
+                    else:
+                        # Use text format for all other tools
+                        tool_response = self._format_tool_result(tool_call)
+                        yield NoticeEvent(
+                            level='info',
+                            message=str(tool_response)
+                        )
 
             finally:
                 session.close()
@@ -377,22 +395,142 @@ class MyChatKitServer(ChatKitServer):
 
         return conversation
 
+    def _create_task_list_widget(self, tool_call: Dict[str, Any]) -> Optional[Any]:
+        """Create a ChatKit Card widget displaying list of tasks.
+
+        Converts tool_call result (task list JSON) into a Card widget with ListView
+        showing task details (id, title, completed status).
+
+        Args:
+            tool_call: Tool execution record with result containing task list JSON
+
+        Returns:
+            WidgetItem with Card/ListView widget, or None if parsing fails
+        """
+        try:
+            result = tool_call.get("result", "")
+
+            # Parse result string to extract task list
+            # Result format: "Task 1: title\nTask 2: title" or JSON
+            tasks = []
+            if isinstance(result, str):
+                # Handle JSON format if result is JSON
+                try:
+                    if result.startswith("["):
+                        import json as json_module
+                        tasks = json_module.loads(result)
+                    else:
+                        # Parse text format: each line is a task
+                        lines = result.strip().split("\n")
+                        for line in lines:
+                            if line.strip():
+                                # Simple parsing: "Task X: title" or "- title (completed/pending)"
+                                if ": " in line:
+                                    parts = line.split(": ", 1)
+                                    title = parts[1]
+                                else:
+                                    title = line.strip()
+
+                                # Extract completion status
+                                completed = "✓" in line or "(completed)" in line.lower()
+                                tasks.append({
+                                    "title": title,
+                                    "completed": completed
+                                })
+                except Exception:
+                    # If parsing fails, return None to fall back to text format
+                    logger.warning(f"Failed to parse task list result: {result}")
+                    return None
+
+            # Handle case where result is already a list of dicts
+            elif isinstance(result, list):
+                tasks = result
+
+            # If no tasks, show empty state
+            if not tasks:
+                return None  # Will use fallback text message
+
+            # Create Card with title and task items directly
+            card_children = [
+                Title(
+                    type="Title",
+                    value=f"📋 Your Tasks ({len(tasks)})",
+                    size="md"
+                )
+            ]
+
+            # Add task items directly to card (max 10)
+            for i, task in enumerate(tasks):
+                if i >= 10:  # Limit to 10 tasks
+                    break
+
+                task_title = task.get("title", task.get("name", f"Task {i+1}")) if isinstance(task, dict) else str(task)
+                is_completed = task.get("completed", False) if isinstance(task, dict) else False
+
+                # Create visual indicator for completion status
+                status_icon = "✓" if is_completed else "○"
+                item_text = f"{status_icon} {task_title}"
+
+                list_item = ListViewItem(
+                    type="ListViewItem",
+                    children=[
+                        Text(
+                            type="Text",
+                            value=item_text,
+                            weight="semibold" if is_completed else "normal",
+                            color="gray" if is_completed else "inherit"
+                        )
+                    ]
+                )
+                card_children.append(list_item)
+
+            # Create Card with title and task items
+            card = Card(
+                type="Card",
+                children=card_children,
+                padding="md",
+                size="full"
+            )
+
+            # Create WidgetItem to yield to ChatKit
+            widget_item = WidgetItem(
+                id=str(uuid.uuid4()),
+                thread_id=getattr(self, '_current_thread_id', str(uuid.uuid4())),
+                type='widget',
+                widget=card,
+                created_at=datetime.utcnow()
+            )
+
+            logger.info(f"Created task list widget with {len(tasks)} tasks")
+            return widget_item
+
+        except Exception as e:
+            logger.error(f"Failed to create task list widget: {e}", exc_info=True)
+            return None  # Fall back to text format
+
     def _format_tool_result(self, tool_call: Dict[str, Any]) -> str:
         """Format tool result for display in ChatKit UI.
 
         Implements hybrid approach:
-        - Simple operations (add/delete/update/complete) → text confirmation
-        - Complex operations (list_tasks) → text format with data
+        - Simple operations (add/delete/update/complete) → text confirmation with emoji
+        - Find operations (find_task_by_name) → search result text
+        - Complex operations (list_tasks) → handled separately with widget (see _create_task_list_widget)
 
         Args:
-            tool_call: Tool execution record
+            tool_call: Tool execution record with keys: tool, result, status
 
         Returns:
-            Formatted result string
+            Formatted result string for display
         """
         tool_name = tool_call.get("tool", "unknown")
         result = tool_call.get("result", "")
         status = tool_call.get("status", "unknown")
+        error = tool_call.get("error")
+
+        # Handle errors first
+        if error or status == "failed":
+            error_msg = error or result or "Operation failed"
+            return f"❌ Error: {error_msg}"
 
         # Simple operations → text confirmations
         if tool_name in ["add_task", "delete_task", "update_task", "complete_task"]:
@@ -401,12 +539,19 @@ class MyChatKitServer(ChatKitServer):
             else:
                 return f"⚠️ {result}"
 
-        # Complex operations → text format
+        # Find operations → search results
+        if tool_name == "find_task_by_name":
+            if result:
+                return f"🔍 Found: {result}"
+            else:
+                return f"🔍 No tasks found matching search"
+
+        # List operations → handled separately (see _create_task_list_widget)
         if tool_name == "list_tasks":
-            return f"Tasks: {result}"
+            return f"📋 Tasks list ready"
 
         # Default: text format
-        return str(result)
+        return str(result) if result else f"✓ {tool_name} completed"
 
 
 # Initialize server instance

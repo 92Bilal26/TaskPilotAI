@@ -254,36 +254,91 @@ class TestChatKitServerRespond:
 
 
 class TestChatKitServerToolFormatting:
-    """Tests for tool result formatting"""
+    """Tests for tool result formatting and widget generation"""
 
-    def test_format_simple_operation_success(self):
-        """Test: Simple operations return checkmark confirmation"""
+    def test_format_add_task_success(self):
+        """Test: add_task returns checkmark confirmation"""
         server = MyChatKitServer()
 
         tool_call = {
             "tool": "add_task",
-            "result": "Task created successfully",
+            "result": "Buy groceries",
             "status": "executed",
         }
 
         result = server._format_tool_result(tool_call)
-        assert "✓" in result or "success" in result.lower()
+        assert "✓" in result
+        assert "Buy groceries" in result
 
-    def test_format_simple_operation_failure(self):
-        """Test: Failed operations return warning symbol"""
+    def test_format_delete_task_success(self):
+        """Test: delete_task returns checkmark confirmation"""
         server = MyChatKitServer()
 
         tool_call = {
             "tool": "delete_task",
-            "result": "Task not found",
-            "status": "failed",
+            "result": "Task deleted",
+            "status": "executed",
         }
 
         result = server._format_tool_result(tool_call)
-        assert "⚠️" in result or "failed" in result.lower()
+        assert "✓" in result
 
-    def test_format_list_operation(self):
-        """Test: List operations return formatted text"""
+    def test_format_update_task_success(self):
+        """Test: update_task returns checkmark confirmation"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "update_task",
+            "result": "Task updated",
+            "status": "executed",
+        }
+
+        result = server._format_tool_result(tool_call)
+        assert "✓" in result
+
+    def test_format_complete_task_success(self):
+        """Test: complete_task returns checkmark confirmation"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "complete_task",
+            "result": "Task marked complete",
+            "status": "executed",
+        }
+
+        result = server._format_tool_result(tool_call)
+        assert "✓" in result
+
+    def test_format_find_task_success(self):
+        """Test: find_task_by_name returns search result"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "find_task_by_name",
+            "result": "Buy groceries",
+            "status": "executed",
+        }
+
+        result = server._format_tool_result(tool_call)
+        assert "🔍" in result
+        assert "Found" in result or "found" in result
+
+    def test_format_find_task_not_found(self):
+        """Test: find_task_by_name returns no results message"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "find_task_by_name",
+            "result": "",
+            "status": "executed",
+        }
+
+        result = server._format_tool_result(tool_call)
+        assert "🔍" in result
+        assert "not found" in result.lower() or "No tasks" in result
+
+    def test_format_list_tasks(self):
+        """Test: list_tasks returns task list message"""
         server = MyChatKitServer()
 
         tool_call = {
@@ -293,10 +348,66 @@ class TestChatKitServerToolFormatting:
         }
 
         result = server._format_tool_result(tool_call)
-        assert "Tasks:" in result or "task" in result.lower()
+        assert "📋" in result or "Tasks" in result
+
+    def test_format_operation_error(self):
+        """Test: Failed operations return error symbol"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "add_task",
+            "result": "Failed to create task",
+            "status": "failed",
+        }
+
+        result = server._format_tool_result(tool_call)
+        assert "❌" in result or "Error" in result
+
+    def test_format_operation_with_error_field(self):
+        """Test: Tool with error field returns error message"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "delete_task",
+            "result": "",
+            "error": "Task not found",
+            "status": "executed",
+        }
+
+        result = server._format_tool_result(tool_call)
+        assert "❌" in result
+        assert "Error" in result
+
+    def test_create_task_list_widget(self):
+        """Test: Widget generation for list_tasks"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "list_tasks",
+            "result": "✓ Buy groceries\n○ Call mom",
+            "status": "executed",
+        }
+
+        widget = server._create_task_list_widget(tool_call)
+        assert widget is not None
+        assert hasattr(widget, 'widget')
+        assert widget.type == 'widget'
+
+    def test_create_task_list_widget_empty(self):
+        """Test: Widget generation with empty task list"""
+        server = MyChatKitServer()
+
+        tool_call = {
+            "tool": "list_tasks",
+            "result": "",
+            "status": "executed",
+        }
+
+        widget = server._create_task_list_widget(tool_call)
+        assert widget is None  # Should fall back to text
 
     def test_format_unknown_tool(self):
-        """Test: Unknown tools return string representation"""
+        """Test: Unknown tools return default message"""
         server = MyChatKitServer()
 
         tool_call = {
