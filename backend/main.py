@@ -20,9 +20,14 @@ app = FastAPI(
 )
 
 # Add CORS middleware FIRST (will execute LAST in middleware chain)
+# Ensure Vercel domain is always included
+cors_origins = list(settings.CORS_ORIGINS) if isinstance(settings.CORS_ORIGINS, (list, tuple)) else settings.CORS_ORIGINS.split(",")
+if "https://task-pilot-ai-ashen.vercel.app" not in cors_origins:
+    cors_origins.append("https://task-pilot-ai-ashen.vercel.app")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
