@@ -2,11 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  // Disable turbopack to avoid PostCSS issues with Tailwind
   experimental: {
-    turbopack: false, // Disable turbopack to avoid PostCSS issues
-  },
-  webpack: (config) => {
-    return config;
+    turbopack: process.env.NEXT_DISABLE_TURBOPACK === '1' ? false : true,
   },
 };
 
