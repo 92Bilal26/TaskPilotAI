@@ -11,10 +11,14 @@ import type { UseChatKitOptions } from '@openai/chatkit-react'
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 
+// Domain public key from OpenAI platform registration
+// This is required for production domain verification
+const DOMAIN_PUBLIC_KEY = process.env.NEXT_PUBLIC_DOMAIN_PUBLIC_KEY || 'domain_pk_694d951d300881908730eaa457e5605809652cfa18d7a99a'
+
 // Domain key for ChatKit verification (required)
 // This should be a unique identifier for your domain
 // Default is acceptable for local development and testing
-const DOMAIN_KEY = process.env.NEXT_PUBLIC_DOMAIN_KEY || 'taskpilot-local-dev'
+const DOMAIN_KEY = process.env.NEXT_PUBLIC_DOMAIN_KEY || 'taskpilot-production'
 
 // ChatKit endpoint - Full path to the ChatKit protocol handler
 // The ChatKit SDK sends requests to: {API_URL}/v1/chat/completions (internally managed)
@@ -99,6 +103,12 @@ export const chatKitConfig: UseChatKitOptions = {
      * Points to our FastAPI chatkit handler
      */
     url: API_URL,
+
+    /**
+     * Domain public key from OpenAI platform
+     * Required for production domain verification
+     */
+    publicKey: DOMAIN_PUBLIC_KEY,
 
     /**
      * Domain key for ChatKit verification
@@ -259,6 +269,11 @@ export function validateChatKitConfig(): {
     errors.push('ChatKit endpoint URL could not be constructed')
   }
 
+  // Domain public key required for production
+  if (!DOMAIN_PUBLIC_KEY || typeof DOMAIN_PUBLIC_KEY !== 'string') {
+    errors.push('NEXT_PUBLIC_DOMAIN_PUBLIC_KEY is not configured (register domain at https://platform.openai.com/settings/organization/security/domain-allowlist)')
+  }
+
   // DOMAIN_KEY just needs to exist and be a string
   // The default value is acceptable for local development
   if (!DOMAIN_KEY || typeof DOMAIN_KEY !== 'string') {
@@ -268,7 +283,7 @@ export function validateChatKitConfig(): {
   // OpenAI API key is optional - backend handles it
   // But warn if not present
   if (!OPENAI_API_KEY) {
-    console.warn('NEXT_PUBLIC_OPENAI_API_KEY is not configured')
+    console.warn('NEXT_PUBLIC_OPENAI_API_KEY is not configured - backend will use server-side key')
   }
 
   return {

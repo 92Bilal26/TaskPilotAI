@@ -113,6 +113,12 @@ export function ChatKitWidget({
 }: ChatKitWidgetProps) {
   const router = useRouter()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
+  const [isMountedClient, setIsMountedClient] = useState(false)
+
+  // Only render on client side to prevent server-side rendering issues
+  useEffect(() => {
+    setIsMountedClient(true)
+  }, [])
 
   // IMPORTANT: All hooks must be called unconditionally before any conditional returns
   // This hook must be called every render to comply with React's Rules of Hooks
@@ -238,6 +244,11 @@ export function ChatKitWidget({
     if (userId) {
       await loadConversationHistory(userId, convId, authToken)
     }
+  }
+
+  // Don't render on server side
+  if (!isMountedClient) {
+    return null
   }
 
   // Loading state
