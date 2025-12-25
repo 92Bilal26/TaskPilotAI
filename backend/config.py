@@ -11,8 +11,7 @@ class Settings(BaseSettings):
     JWT_EXPIRY_SECONDS: int = 604800
     JWT_REFRESH_EXPIRY_SECONDS: int = 1209600
     BETTER_AUTH_SECRET: str = "dev-secret-key"
-    OPENAI_API_KEY: str = "sk-test-key"  # Required for OpenAI integration
-    CHATKIT_WORKFLOW_ID: str = "wf_6946b383d368819081b556e6e5fa66330d48d0c9ea4fccd8"  # OpenAI Agent Builder Workflow ID
+    OPENAI_API_KEY: str = "sk-test-key"  # Required for OpenAI Agents SDK
     # ChatKit Configuration for Advanced Self-Hosted Integration
     CHATKIT_ENABLED: bool = True
     CHATKIT_SESSION_TIMEOUT: int = 3600  # 1 hour session timeout in seconds
