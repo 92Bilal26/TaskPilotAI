@@ -105,14 +105,10 @@ export const chatKitConfig: UseChatKitOptions = {
     url: API_URL,
 
     /**
-     * Domain public key from OpenAI platform
-     * Required for production domain verification
-     */
-    publicKey: DOMAIN_PUBLIC_KEY,
-
-    /**
      * Domain key for ChatKit verification
      * Uniquely identifies this deployment
+     * Domain public key (domain_pk_694d951d300881908730eaa457e5605809652cfa18d7a99a)
+     * is registered at https://platform.openai.com/settings/organization/security/domain-allowlist
      */
     domainKey: DOMAIN_KEY,
 
