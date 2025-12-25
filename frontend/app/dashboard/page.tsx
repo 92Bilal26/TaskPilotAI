@@ -8,7 +8,6 @@ import { Sidebar } from "@/components/Layout/Sidebar";
 import { Header } from "@/components/Layout/Header";
 import { TaskCard } from "@/components/Tasks/TaskCard";
 import { TaskEditModal } from "@/components/Tasks/TaskEditModal";
-import { ChatModal } from "@/components/Chat/ChatModal";
 import { Toast } from "@/components/Toast/Toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SearchBar } from "@/components/Search/SearchBar";
 import { Badge } from "@/components/ui/badge";
+import { ChatKitWidget } from "@/components/ChatKit/ChatKitWidget";
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading: authLoading, logout } = useAuth();
@@ -30,7 +30,7 @@ export default function DashboardPage() {
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [showChatKit, setShowChatKit] = useState(false);
   const [authToken, setAuthToken] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
 
@@ -60,6 +60,20 @@ export default function DashboardPage() {
       fetchTasks();
     }
   }, [authLoading, isAuthenticated]);
+
+  // Auto-refresh tasks when ChatKit is active (every 1 second for real-time sync)
+  useEffect(() => {
+    if (!showChatKit) return;
+
+    // Refresh immediately when chat opens
+    fetchTasks();
+
+    const interval = setInterval(() => {
+      fetchTasks();
+    }, 1000); // Refresh every 1 second when chat is active for real-time updates
+
+    return () => clearInterval(interval);
+  }, [showChatKit]);
 
   // Filter tasks based on status and search
   useEffect(() => {
@@ -180,11 +194,11 @@ export default function DashboardPage() {
           action={
             <div className="flex gap-2">
               <Button
-                onClick={() => setIsChatOpen(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-                title="Open ChatPilot AI"
+                onClick={() => setShowChatKit(!showChatKit)}
+                className={showChatKit ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}
+                title="Toggle ChatKit AI Assistant"
               >
-                💬 Chat
+                {showChatKit ? "✓ Chat Active" : "💬 Open Chat"}
               </Button>
               <Button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
                 + New Task
@@ -193,9 +207,10 @@ export default function DashboardPage() {
           }
         />
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-auto">
-          <div className="p-4 sm:p-6 md:p-8 max-w-7xl mx-auto w-full">
+        {/* Content Area - Split Layout with ChatKit */}
+        <div className="flex-1 overflow-auto flex gap-4 p-4 sm:p-6 md:p-8">
+          {/* Tasks Section */}
+          <div className={`flex-1 min-w-0 ${showChatKit ? 'w-1/2' : 'w-full'}`}>
             {/* Stats Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
               <Card>
@@ -346,6 +361,24 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+
+          {/* ChatKit Section - Shows when showChatKit is true */}
+          {showChatKit && (
+            <div className="w-1/2 min-w-0 bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col overflow-hidden">
+              <div className="p-4 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-900">TaskPilot AI Chat</h3>
+                <p className="text-sm text-gray-500 mt-1">Powered by OpenAI ChatKit</p>
+              </div>
+              <div className="flex-1 overflow-hidden">
+                {authToken && userId && (
+                  <ChatKitWidget
+                    showHeader={false}
+                    title="TaskPilot AI"
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -356,16 +389,6 @@ export default function DashboardPage() {
         onSave={handleSaveEdit}
         isLoading={loading}
       />
-
-      {/* Chat Modal */}
-      {authToken && userId && (
-        <ChatModal
-          isOpen={isChatOpen}
-          onClose={() => setIsChatOpen(false)}
-          userId={userId}
-          authToken={authToken}
-        />
-      )}
 
       {/* Toasts */}
       <Toast messages={toasts} onRemove={removeToast} />

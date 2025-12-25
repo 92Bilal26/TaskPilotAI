@@ -8,7 +8,7 @@
 import type { UseChatKitOptions } from '@openai/chatkit-react'
 
 // Get environment variables
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 
 // Domain key for ChatKit verification (required)
@@ -16,13 +16,22 @@ const OPENAI_API_KEY = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 // Default is acceptable for local development and testing
 const DOMAIN_KEY = process.env.NEXT_PUBLIC_DOMAIN_KEY || 'taskpilot-local-dev'
 
+// ChatKit endpoint - Full path to the ChatKit protocol handler
+// The ChatKit SDK sends requests to: {API_URL}/v1/chat/completions (internally managed)
+// So we point it to the base endpoint and it handles the path
+const API_URL = `${API_BASE_URL}/api/v1/chatkit`
+
 /**
  * Get JWT token from Better Auth
  * Tries multiple locations where token might be stored
  */
 function getAuthToken(): string | null {
-  // Try localStorage first (standard)
-  let token = localStorage.getItem('auth_token')
+  // Try access_token first (standard from API client)
+  let token = localStorage.getItem('access_token')
+  if (token) return token
+
+  // Try auth_token (alternative)
+  token = localStorage.getItem('auth_token')
   if (token) return token
 
   // Try the auth-token key (Better Auth)
@@ -30,6 +39,9 @@ function getAuthToken(): string | null {
   if (token) return token
 
   // Try sessionStorage
+  token = sessionStorage.getItem('access_token')
+  if (token) return token
+
   token = sessionStorage.getItem('auth_token')
   if (token) return token
 
@@ -38,27 +50,30 @@ function getAuthToken(): string | null {
 
 /**
  * Custom fetch function that adds JWT authentication
+ * Signature matches standard fetch API for compatibility
  */
 async function authenticatedFetch(
-  url: string,
-  options: RequestInit = {}
+  input: string | URL | Request,
+  options?: RequestInit
 ): Promise<Response> {
   // Get JWT token
   const token = getAuthToken()
 
-  // Build headers
-  const headers = new Headers(options.headers || {})
+  // Build headers as plain object
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string> || {}),
+  }
 
   // Add JWT token if available
   if (token) {
-    headers.set('Authorization', `Bearer ${token}`)
+    headers['Authorization'] = `Bearer ${token}`
   }
 
   // Add domain key for ChatKit verification
-  headers.set('X-ChatKit-Domain-Key', DOMAIN_KEY)
+  headers['X-ChatKit-Domain-Key'] = DOMAIN_KEY
 
   // Return fetch with updated options
-  return fetch(url, {
+  return fetch(input, {
     ...options,
     headers,
   })
@@ -67,56 +82,35 @@ async function authenticatedFetch(
 /**
  * ChatKit Configuration
  *
- * This configuration integrates OpenAI ChatKit with your backend
+ * Custom Backend Integration (Advanced Pattern)
+ *
+ * Uses the official quickstart pattern with:
+ * - api.url: Custom backend endpoint
+ * - domainKey: Domain identifier for verification
+ * - authenticatedFetch: Custom fetch wrapper for JWT auth
  */
 export const chatKitConfig: UseChatKitOptions = {
   // ============================================
-  // API Configuration (REQUIRED)
+  // API Configuration for Custom Backend
   // ============================================
   api: {
     /**
-     * Get client secret from backend session endpoint
-     * Frontend calls: POST /api/v1/chatkit/sessions (with JWT auth)
-     * Backend returns: { client_secret: "...", session_id: "...", conversation_id: ... }
+     * Custom backend URL endpoint
+     * Points to our FastAPI chatkit handler
      */
-    async getClientSecret(existing) {
-      // If we already have a secret, reuse it
-      if (existing) {
-        console.log('Reusing existing ChatKit client secret')
-        return existing
-      }
+    url: API_URL,
 
-      try {
-        // Call backend session endpoint with JWT authentication
-        const res = await authenticatedFetch(`${API_URL}/api/v1/chatkit/sessions`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
+    /**
+     * Domain key for ChatKit verification
+     * Uniquely identifies this deployment
+     */
+    domainKey: DOMAIN_KEY,
 
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}))
-          throw new Error(`Failed to get ChatKit session: ${res.statusText} - ${JSON.stringify(errorData)}`)
-        }
-
-        const data = await res.json()
-        console.log('Got ChatKit session:', {
-          session_id: data.session_id,
-          conversation_id: data.conversation_id,
-        })
-
-        // Store conversation ID for later use
-        if (data.conversation_id) {
-          sessionStorage.setItem('chatkit_conversation_id', String(data.conversation_id))
-        }
-
-        return data.client_secret
-      } catch (error) {
-        console.error('Error getting ChatKit session:', error)
-        throw error
-      }
-    },
+    /**
+     * Custom fetch function with JWT authentication
+     * Wraps all API calls to add Bearer token
+     */
+    fetch: authenticatedFetch,
   },
 
   // ============================================
@@ -145,41 +139,10 @@ export const chatKitConfig: UseChatKitOptions = {
   },
 
   // ============================================
-  // Start Screen (New Conversation)
-  // ============================================
-  startScreen: {
-    title: 'Welcome to TaskPilot AI',
-    subtitle: 'Manage your tasks with AI assistance',
-    quickStarters: [
-      {
-        title: 'Add a task',
-        subtitle: 'Create a new task',
-        prompt: 'Add a task to buy groceries',
-      },
-      {
-        title: 'List my tasks',
-        subtitle: 'View all tasks',
-        prompt: 'Show me all my pending tasks',
-      },
-      {
-        title: 'Complete a task',
-        subtitle: 'Mark task as done',
-        prompt: 'Mark my first task as complete',
-      },
-      {
-        title: 'Delete a task',
-        subtitle: 'Remove a task',
-        prompt: 'Delete my grocery shopping task',
-      },
-    ],
-  },
-
-  // ============================================
   // Composer Configuration
   // ============================================
   composer: {
     placeholder: 'Ask me to add, update, or delete tasks...',
-    autoFocus: true,
   },
 
   // ============================================
@@ -288,8 +251,12 @@ export function validateChatKitConfig(): {
 } {
   const errors: string[] = []
 
-  if (!API_URL) {
+  if (!API_BASE_URL) {
     errors.push('NEXT_PUBLIC_API_URL is not configured')
+  }
+
+  if (!API_URL) {
+    errors.push('ChatKit endpoint URL could not be constructed')
   }
 
   // DOMAIN_KEY just needs to exist and be a string

@@ -57,13 +57,13 @@ def list_tasks(
 
             tasks = session.exec(query).all()
 
-        # Count totals
-        all_tasks = session.exec(
-            select(Task).where(Task.user_id == user_id)
-        ).all()
-        total = len(all_tasks)
-        pending_count = len([t for t in all_tasks if not t.completed])
-        completed_count = len([t for t in all_tasks if t.completed])
+            # Count totals (inside session context to avoid closed session error)
+            all_tasks = session.exec(
+                select(Task).where(Task.user_id == user_id)
+            ).all()
+            total = len(all_tasks)
+            pending_count = len([t for t in all_tasks if not t.completed])
+            completed_count = len([t for t in all_tasks if t.completed])
 
         # Format response
         task_list = [

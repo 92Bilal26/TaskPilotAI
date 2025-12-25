@@ -1,15 +1,16 @@
 /**
  * ChatKit Widget Component
  *
- * Wrapper component for OpenAI ChatKit integration.
- * Handles initialization, authentication, state management, and conversation history.
+ * Wrapper component for OpenAI ChatKit integration using React hook pattern.
+ * Uses the official ChatKit React package with custom backend configuration.
+ * Handles authentication and conversation state.
  */
 
 'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useChatKit, ChatKit } from '@openai/chatkit-react'
+import { ChatKit, useChatKit } from '@openai/chatkit-react'
 import { chatKitConfig, validateChatKitConfig } from '@/lib/chatkit-config'
 import { useAuth } from '@/lib/useAuth'
 import { chatClient } from '@/lib/chat-client'
@@ -70,15 +71,6 @@ interface ChatKitWidgetProps {
 }
 
 /**
- * ChatKitWidget Component
- *
- * Provides a ready-to-use ChatKit integration with:
- * - JWT authentication from Better Auth
- * - Session management and conversation persistence
- * - Error handling and loading states
- * - Customizable header and navigation
- */
-/**
  * Extract user ID from JWT token
  */
 function extractUserIdFromToken(token: string | null): string | null {
@@ -99,9 +91,13 @@ function extractUserIdFromToken(token: string | null): string | null {
  */
 function getAuthToken(): string | null {
   if (typeof window === 'undefined') return null
-  let token = localStorage.getItem('auth_token')
+  let token = localStorage.getItem('access_token')
+  if (token) return token
+  token = localStorage.getItem('auth_token')
   if (token) return token
   token = localStorage.getItem('authjs.session-token')
+  if (token) return token
+  token = sessionStorage.getItem('access_token')
   if (token) return token
   token = sessionStorage.getItem('auth_token')
   return token
@@ -117,6 +113,11 @@ export function ChatKitWidget({
 }: ChatKitWidgetProps) {
   const router = useRouter()
   const { isAuthenticated, isLoading: authLoading } = useAuth()
+
+  // IMPORTANT: All hooks must be called unconditionally before any conditional returns
+  // This hook must be called every render to comply with React's Rules of Hooks
+  const chatkit = useChatKit(chatKitConfig)
+
   const [error, setError] = useState<string | null>(null)
   const [isMounted, setIsMounted] = useState(false)
 
@@ -138,23 +139,14 @@ export function ChatKitWidget({
   const [showConversationList, setShowConversationList] = useState(false)
   const [loadingConversations, setLoadingConversations] = useState(false)
 
-  // Early return if not authenticated to avoid hook violations
-  if (!isAuthenticated && !authLoading) {
-    return null
-  }
-
-  // Call hook at top level (must be done before any conditional returns)
-  let chatKitResult
-  try {
-    chatKitResult = useChatKit(chatKitConfig)
-  } catch (e: any) {
-    console.error('ChatKit hook error:', e)
-  }
-
-  // Initialize: Extract user ID and load conversation history
+  // Initialize ChatKit using the React hook
   useEffect(() => {
+    if (!isAuthenticated || authLoading) {
+      return
+    }
+
     setIsMounted(true)
-    console.log('ChatKitWidget mounted with config:', chatKitConfig)
+    console.log('ChatKitWidget mounting with React hook configuration')
 
     const validation = validateChatKitConfig()
     if (!validation.valid) {
@@ -164,7 +156,7 @@ export function ChatKitWidget({
       return
     }
 
-    // Extract user ID from JWT token
+    // Extract user ID from JWT token for conversation history loading
     const token = getAuthToken()
     const extractedUserId = extractUserIdFromToken(token)
     if (!extractedUserId) {
@@ -184,10 +176,9 @@ export function ChatKitWidget({
 
     if (convId) {
       setConversationId(convId)
-      // Load conversation history
       loadConversationHistory(extractedUserId, convId, token)
     }
-  }, [propConversationId])
+  }, [isAuthenticated, authLoading, propConversationId])
 
   // Load conversation history from backend
   async function loadConversationHistory(
@@ -272,7 +263,7 @@ export function ChatKitWidget({
       <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center max-w-md">
           <div className="text-red-600 text-lg font-semibold mb-2">
-            ChatKit Configuration Error
+            ChatKit Error
           </div>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
@@ -286,123 +277,14 @@ export function ChatKitWidget({
     )
   }
 
-  // ChatKit not initialized
-  if (!chatKitResult) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="text-center max-w-md">
-          <p className="text-gray-600 mb-4">Initializing ChatKit...</p>
-          <p className="text-xs text-gray-500">
-            Please wait while we set up your chat session
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  const { control } = chatKitResult
-
+  // Render ChatKit component
   return (
     <div
       className="flex flex-col h-screen bg-white"
       style={{ overflow: 'hidden' }}
     >
-      {/* Header */}
-      {showHeader && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4 shadow-md flex items-center justify-between flex-shrink-0">
-          <div className="flex-1">
-            <h1 className="text-2xl font-bold">{title}</h1>
-            <p className="text-blue-100 text-sm">{subtitle}</p>
-            {conversationHistory.length > 0 && (
-              <p className="text-blue-100 text-xs mt-1">
-                Loaded {conversationHistory.length} previous message(s)
-              </p>
-            )}
-            {loadingHistory && (
-              <p className="text-blue-100 text-xs mt-1">Loading conversation history...</p>
-            )}
-            {historyError && (
-              <p className="text-blue-200 text-xs mt-1">⚠️ {historyError}</p>
-            )}
-          </div>
-
-          {/* Conversation Switcher Button (T021) */}
-          <div className="ml-4 relative">
-            <button
-              onClick={() => {
-                setShowConversationList(!showConversationList)
-                if (!showConversationList && userId) {
-                  const token = getAuthToken()
-                  loadConversations(userId, token)
-                }
-              }}
-              className="px-3 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm mr-2"
-              title="Switch conversation"
-            >
-              💬 {conversations.length}
-            </button>
-
-            {/* Conversation List Dropdown (T021) */}
-            {showConversationList && (
-              <div className="absolute top-full right-0 mt-2 bg-white text-gray-800 rounded-lg shadow-lg z-10 min-w-max max-h-64 overflow-y-auto">
-                {loadingConversations ? (
-                  <div className="px-4 py-3 text-center text-sm text-gray-500">
-                    Loading...
-                  </div>
-                ) : conversations.length === 0 ? (
-                  <div className="px-4 py-3 text-sm text-gray-500">
-                    No conversations yet
-                  </div>
-                ) : (
-                  conversations.map((conv) => (
-                    <button
-                      key={conv.id}
-                      onClick={() => switchConversation(conv.id, getAuthToken())}
-                      className={`block w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors border-b last:border-b-0 ${
-                        conversationId === conv.id
-                          ? 'bg-blue-50 font-semibold text-blue-600'
-                          : ''
-                      }`}
-                    >
-                      <div className="font-medium text-sm">{conv.title}</div>
-                      <div className="text-xs text-gray-500">
-                        {conv.message_count} messages
-                      </div>
-                    </button>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-
-          {showBackButton && (
-            <button
-              onClick={() => router.push(backRoute)}
-              className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-medium"
-              aria-label="Go back"
-            >
-              Back
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* ChatKit Component - Full Height */}
-      <div
-        className="flex-1 overflow-hidden"
-        style={{ display: 'flex', flexDirection: 'column', width: '100%' }}
-      >
-        {isMounted && control && (
-          <ChatKit
-            control={control}
-            style={{
-              width: '100%',
-              height: '100%',
-              flex: 1,
-            }}
-          />
-        )}
-      </div>
+      {/* ChatKit Component initialized via hook */}
+      <ChatKit control={chatkit.control} />
     </div>
   )
 }

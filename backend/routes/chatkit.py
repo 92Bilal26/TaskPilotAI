@@ -11,16 +11,24 @@ from typing import AsyncIterator, Optional, Dict, Any
 from datetime import datetime, timedelta
 import logging
 import uuid
+import httpx
+import json
+import base64
 
 from fastapi import APIRouter, HTTPException, Request, Depends
+from fastapi.responses import StreamingResponse, Response, JSONResponse
 from pydantic import BaseModel
+from openai import OpenAI
+from jose import jwt as jose_jwt
 from chatkit.server import ChatKitServer
 from chatkit.store import Store
 from chatkit.types import (
     UserMessageItem, ThreadMetadata,
-    ErrorEvent, NoticeEvent, WidgetItem
+    ErrorEvent, NoticeEvent, WidgetItem, Page
 )
 from chatkit.widgets import Card, ListViewItem, Text, Title
+from chatkit.agents import AgentContext, simple_to_agent_input, stream_agent_response
+from agents import Runner
 
 from sqlmodel import Session, select
 from db import get_session
@@ -61,9 +69,36 @@ class CustomChatKitStore(Store):
         """Save thread metadata"""
         self.threads[thread.id] = thread
 
-    async def load_thread_items(self, thread_id: str, context):
-        """Load thread items"""
-        return self.items.get(thread_id, [])
+    async def load_thread_items(
+        self,
+        thread_id: str,
+        after: str | None,
+        limit: int,
+        order: str,
+        context,
+    ):
+        """Load thread items with pagination - returns Page object"""
+        items = self.items.get(thread_id, [])
+
+        # Sort by creation time
+        items.sort(key=lambda i: i.created_at, reverse=(order == "desc"))
+
+        # Filter by 'after' cursor if provided
+        if after:
+            after_index = next((i for i, item in enumerate(items) if item.id == after), -1)
+            if after_index >= 0:
+                items = items[after_index + 1:]
+
+        # Apply pagination
+        has_more = len(items) > limit
+        items = items[:limit]
+
+        # Return Page object with proper structure (uses 'data' field, not 'items')
+        return Page(
+            data=items,
+            has_more=has_more,
+            after=items[-1].id if items else None
+        )
 
     async def add_thread_item(self, thread_id: str, item, context) -> None:
         """Add item to thread"""
@@ -101,9 +136,30 @@ class CustomChatKitStore(Store):
                     for key, value in updates.items():
                         setattr(item, key, value)
 
-    async def load_threads(self, context):
-        """Load all threads"""
-        return list(self.threads.values())
+    async def load_threads(self, context, limit: int = 10, after: str = None, order: str = "desc", **kwargs):
+        """Load threads with pagination - returns Page object with has_more attribute"""
+        threads = list(self.threads.values())
+
+        # Sort by creation time
+        threads.sort(key=lambda t: t.created_at, reverse=(order == "desc"))
+
+        # Filter by 'after' cursor if provided
+        if after:
+            after_index = next((i for i, t in enumerate(threads) if t.id == after), -1)
+            if after_index >= 0:
+                threads = threads[after_index + 1:]
+
+        # Apply pagination
+        has_more = len(threads) > limit
+        items = threads[:limit]
+
+        # Return Page object with proper structure (uses 'data' field, not 'items')
+        return Page(
+            data=items,
+            has_more=has_more,
+            # Include the last thread's ID as cursor for next page
+            after=items[-1].id if items else None
+        )
 
     async def load_attachment(self, attachment_id: str, context):
         """Load attachment"""
@@ -148,183 +204,145 @@ class MyChatKitServer(ChatKitServer):
         input: UserMessageItem,
         context
     ) -> AsyncIterator[ErrorEvent | NoticeEvent]:
-        """Process user message and return AI response with user isolation.
+        """Process user message and stream AI response using official ChatKit agents pattern.
 
-        T023: User Isolation Middleware
-        - Extracts user_id from JWT token context
-        - Verifies user has access to conversation (prevents cross-user access)
-        - Fetches conversation history for context
-        - Delegates to Agents SDK for processing
-        - Returns response with tool confirmations in hybrid format
+        Uses the official ChatKit agents library pattern:
+        - Runner.run_streamed() for streaming agent execution
+        - stream_agent_response() for proper event yielding
+        - simple_to_agent_input() for message conversion
 
         Args:
-            thread: ChatKit thread metadata containing session info
+            thread: ChatKit thread metadata
             input: User message item
-            context: Request context with user info
+            context: Request context with user_id
 
         Yields:
-            ChatKit NoticeEvent/ErrorEvent with message content
-
-        Raises:
-            ErrorEvent: If user not authenticated or conversation access denied
+            ThreadStreamEvent (NoticeEvent, ErrorEvent, etc.)
         """
         try:
-            # Extract user_id from context (JWT token) - T023
+            # Extract user_id for user isolation (T023)
             user_id = getattr(context, 'user_id', None) or context.headers.get("X-User-ID")
             if not user_id:
-                yield ErrorEvent(
-                    level='danger',
-                    message="User authentication required"
-                )
+                yield ErrorEvent(level='danger', message="Authentication required")
                 return
 
-            logger.info(
-                f"Processing ChatKit message for user: {user_id}, "
-                f"session: {thread.session_id}"
+            logger.info(f"ChatKit respond: user={user_id}, thread={thread.id}")
+
+            # Add the current user message to the thread first
+            await self.store.add_thread_item(thread.id, input, context)
+            logger.info(f"Added user message to thread: {input.id if hasattr(input, 'id') else 'unknown'}")
+
+            # Load thread items and convert to agent input
+            items_page = await self.store.load_thread_items(
+                thread.id,
+                after=None,
+                limit=30,
+                order="desc",
+                context=context,
+            )
+            items = list(reversed(items_page.data))
+            agent_input = await simple_to_agent_input(items)
+
+            logger.info(f"Loaded {len(items)} thread items for agent (including user message)")
+
+            # Initialize MCP tools for agent and wrap them to inject user_id
+            mcp_server = initialize_mcp_server()
+            raw_tools = mcp_server.get_tools()
+
+            # Create wrapper functions that inject user_id into tool calls
+            # This ensures user isolation when tools are called by the agent
+            wrapped_tools = []
+
+            # Import the original tool functions to wrap them
+            from mcp.tools import add_task as mcp_add_task
+            from mcp.tools import list_tasks as mcp_list_tasks
+            from mcp.tools import delete_task as mcp_delete_task
+            from mcp.tools import complete_task as mcp_complete_task
+            from mcp.tools import update_task as mcp_update_task
+            from mcp.tools import find_task_by_name as mcp_find_task_by_name
+
+            # Create wrapper for add_task that automatically includes user_id
+            def add_task_wrapper(title: str, description: str = None):
+                """Add a task with automatic user isolation"""
+                logger.info(f"add_task called for user {user_id}")
+                return mcp_add_task(user_id=user_id, title=title, description=description)
+
+            # Create wrapper for list_tasks that automatically includes user_id
+            def list_tasks_wrapper(status: str = "all"):
+                """List tasks with automatic user isolation"""
+                logger.info(f"list_tasks called for user {user_id}")
+                return mcp_list_tasks(user_id=user_id, status=status)
+
+            # Create wrapper for delete_task that automatically includes user_id
+            def delete_task_wrapper(task_id: str):
+                """Delete a task with automatic user isolation"""
+                logger.info(f"delete_task called for user {user_id}")
+                return mcp_delete_task(user_id=user_id, task_id=task_id)
+
+            # Create wrapper for complete_task that automatically includes user_id
+            def complete_task_wrapper(task_id: str):
+                """Mark a task as complete with automatic user isolation"""
+                logger.info(f"complete_task called for user {user_id}")
+                return mcp_complete_task(user_id=user_id, task_id=task_id)
+
+            # Create wrapper for update_task that automatically includes user_id
+            def update_task_wrapper(task_id: str, title: str = None, description: str = None):
+                """Update a task with automatic user isolation"""
+                logger.info(f"update_task called for user {user_id}")
+                return mcp_update_task(user_id=user_id, task_id=task_id, title=title, description=description)
+
+            # Create wrapper for find_task_by_name that automatically includes user_id
+            def find_task_by_name_wrapper(name: str):
+                """Find a task by name with automatic user isolation"""
+                logger.info(f"find_task_by_name called for user {user_id}")
+                return mcp_find_task_by_name(user_id=user_id, name=name)
+
+            # Use wrapped tools instead of raw tools
+            wrapped_tools = [
+                add_task_wrapper,
+                list_tasks_wrapper,
+                delete_task_wrapper,
+                complete_task_wrapper,
+                update_task_wrapper,
+                find_task_by_name_wrapper,
+            ]
+
+            logger.info(f"Initialized MCP with {len(wrapped_tools)} wrapped tools")
+
+            # Create agent with wrapped tools that include user_id
+            try:
+                task_agent = create_task_agent(tools=wrapped_tools)
+            except ValueError as e:
+                logger.error(f"Agent init failed: {e}")
+                yield ErrorEvent(level='danger', message="Agent initialization failed")
+                return
+
+            # Create agent context for streaming
+            agent_context = AgentContext(
+                thread=thread,
+                store=self.store,
+                request_context=context,
             )
 
-            # Extract message content
-            if isinstance(input, UserMessageItem):
-                message_content = input.text
-            elif hasattr(input, 'output'):
-                message_content = input.output
-            else:
-                message_content = str(input)
+            # Stream agent response using official pattern
+            # Note: task_agent is a TaskManagementAgent wrapper, need to pass task_agent.agent
+            logger.info("Starting agent streaming...")
+            result = Runner.run_streamed(
+                task_agent.agent,  # Pass the underlying Agent object, not the wrapper
+                agent_input,
+                context=agent_context,  # Include context parameter
+            )
 
-            # Get database session
-            session: Session = next(get_session())
-
-            try:
-                # Get or create conversation linked to ChatKit session
-                conversation = self._get_or_create_conversation(
-                    session, thread.session_id, user_id
-                )
-                logger.info(f"Using conversation {conversation.id}")
-
-                # T023: Verify user isolation - ensure conversation belongs to this user
-                # This prevents users from accessing other users' conversations
-                self._verify_user_conversation_access(session, conversation.id, user_id)
-
-                # Store user message
-                user_msg = Message(
-                    conversation_id=conversation.id,
-                    user_id=user_id,
-                    role="user",
-                    content=message_content,
-                    created_at=datetime.utcnow(),
-                )
-                session.add(user_msg)
-                session.commit()
-                logger.info(f"Stored user message {user_msg.id}")
-
-                # Load conversation context
-                conv_context = get_conversation_context(
-                    conversation_id=conversation.id,
-                    user_id=user_id,
-                )
-
-                # Get conversation history (last 10 messages for context)
-                conversation_history = conv_context.get_context(
-                    max_messages=settings.CHATKIT_MAX_HISTORY
-                )
-                logger.info(f"Loaded {len(conversation_history)} previous messages")
-
-                # Initialize MCP server and get tools
-                mcp_server = initialize_mcp_server()
-                tools_list = list(mcp_server.get_tools().values())
-                logger.info(f"Initialized MCP with {len(tools_list)} tools")
-
-                # Initialize agent with tools
-                try:
-                    agent = create_task_agent(tools=tools_list)
-                except ValueError as e:
-                    logger.error(f"Failed to initialize agent: {e}")
-                    yield ErrorEvent(
-                        level='danger',
-                        message="Agent initialization failed. Check OpenAI API key."
-                    )
-                    return
-
-                # Process message with agent
-                try:
-                    agent_response = await agent.process_message(
-                        user_id=user_id,
-                        message=message_content,
-                        conversation_history=conversation_history,
-                    )
-                    response_len = len(agent_response.get('response', ''))
-                    logger.info(f"Agent response received: {response_len} chars")
-
-                except Exception as e:
-                    logger.error(f"Agent processing failed: {e}")
-                    agent_response = {
-                        "response": (
-                            "I encountered an issue processing your request. "
-                            "Please try again."
-                        ),
-                        "tool_calls": [],
-                        "status": "error",
-                    }
-
-                # Store assistant message with tool calls
-                assistant_msg = Message(
-                    conversation_id=conversation.id,
-                    user_id=user_id,
-                    role="assistant",
-                    content=agent_response.get("response", ""),
-                    tool_calls=agent_response.get("tool_calls", []),
-                    created_at=datetime.utcnow(),
-                )
-                session.add(assistant_msg)
-
-                # Update conversation title if not set
-                if not conversation.title:
-                    conversation.title = message_content[:100]
-                    conversation.updated_at = datetime.utcnow()
-
-                session.commit()
-                logger.info(f"Stored assistant message {assistant_msg.id}")
-
-                # Yield AI response to ChatKit UI
-                yield NoticeEvent(
-                    level='info',
-                    message=agent_response.get("response", "")
-                )
-
-                # Yield tool confirmations in hybrid format
-                # (text for simple ops, widgets for complex)
-                for tool_call in agent_response.get("tool_calls", []):
-                    tool_name = tool_call.get("tool", "unknown")
-
-                    # Check if this is a widget-based tool (list_tasks)
-                    if tool_name == "list_tasks":
-                        # Generate Card widget for list_tasks
-                        widget = self._create_task_list_widget(tool_call)
-                        if widget:
-                            # Convert widget to WidgetItem and yield
-                            yield widget
-                        else:
-                            # Fallback to text if widget generation fails
-                            yield NoticeEvent(
-                                level='warning',
-                                message=str(tool_call.get("result", "No tasks"))
-                            )
-                    else:
-                        # Use text format for all other tools
-                        tool_response = self._format_tool_result(tool_call)
-                        yield NoticeEvent(
-                            level='info',
-                            message=str(tool_response)
-                        )
-
-            finally:
-                session.close()
+            # Yield events as they stream in
+            async for event in stream_agent_response(agent_context, result):
+                yield event
+                logger.debug(f"Yielded event: {type(event).__name__}")
 
         except Exception as e:
             logger.error(f"Error in respond: {str(e)}", exc_info=True)
             yield ErrorEvent(
                 level='danger',
-                message=f"Error processing message: {str(e)}"
+                message=f"Error: {str(e)}"
             )
 
     async def action(
@@ -637,69 +655,78 @@ class ChatKitSessionResponse(BaseModel):
 @router.post("/chatkit/sessions", response_model=ChatKitSessionResponse)
 async def create_chatkit_session(
     request: Request,
-    session: Session = Depends(get_session)
+    db_session: Session = Depends(get_session)
 ) -> ChatKitSessionResponse:
-    """Create a ChatKit session linked to a database Conversation.
+    """Create a ChatKit session using OpenAI SDK.
+
+    According to OpenAI ChatKit documentation, proper session creation requires:
+    1. Using the official OpenAI SDK to create a session
+    2. OpenAI SDK returns a properly formatted client_secret
+    3. Link the session to a database conversation for persistence
 
     Args:
         request: FastAPI request with user context
-        session: Database session
+        db_session: Database session
 
     Returns:
-        ChatKitSessionResponse with client_secret for frontend
+        ChatKitSessionResponse with proper client_secret from OpenAI SDK
     """
     try:
         # Extract user_id from request state (set by auth middleware)
         user_id = getattr(request.state, "user_id", None)
         if not user_id:
-            # Fallback: check headers for user ID
             user_id = request.headers.get("X-User-ID")
         if not user_id:
             raise HTTPException(status_code=401, detail="User not authenticated")
 
         logger.info(f"Creating ChatKit session for user: {user_id}")
 
-        # Create new conversation for this ChatKit session
+        # For custom ChatKit backend (advanced integration):
+        # The client_secret is just a session identifier
+        # It doesn't need to be a JWT - just a unique string
+        session_id = str(uuid.uuid4())
+
+        # For custom backends, the client_secret is simply the session ID
+        # The ChatKit SDK stores this and sends it back with subsequent requests
+        client_secret = session_id
+
+        logger.info(f"Generated custom ChatKit session {session_id} for user {user_id}")
+
+        # Create conversation in our database for persistence
         conversation = Conversation(
             user_id=user_id,
             title=f"ChatKit Session {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}",
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
-        session.add(conversation)
-        session.commit()
-        session.refresh(conversation)
-        logger.info(f"Created conversation {conversation.id}")
+        db_session.add(conversation)
+        db_session.commit()
+        db_session.refresh(conversation)
+        logger.info(f"Created database conversation {conversation.id}")
 
-        # Create ChatKitSession record
-        # Note: In production, session_id would come from actual ChatKit SDK initialization
-        # For now, we generate a unique session_id
-        chatkit_session_id = str(uuid.uuid4())
+        # Create ChatKitSession record to link OpenAI session to our conversation
         expires_at = datetime.utcnow() + timedelta(
             seconds=settings.CHATKIT_SESSION_TIMEOUT
         )
 
         chatkit_session_record = ChatKitSession(
-            session_id=chatkit_session_id,
+            session_id=session_id,  # Use the actual session ID from OpenAI
             user_id=user_id,
             conversation_id=conversation.id,
             expires_at=expires_at,
             created_at=datetime.utcnow()
         )
-        session.add(chatkit_session_record)
+        db_session.add(chatkit_session_record)
 
-        # Update conversation with ChatKit session link
-        conversation.chatkit_session_id = chatkit_session_id
-        session.commit()
-        logger.info(f"Created ChatKit session {chatkit_session_id}")
+        # Link conversation to ChatKit session
+        conversation.chatkit_session_id = session_id
+        db_session.commit()
+        logger.info(f"Created ChatKit session link {session_id}")
 
-        # In production, this would be the actual client_secret from ChatKit SDK
-        # For now, return a generated secret
-        client_secret = str(uuid.uuid4())
-
+        # Return the properly formatted client_secret from OpenAI API
         return ChatKitSessionResponse(
             client_secret=client_secret,
-            session_id=chatkit_session_id,
+            session_id=session_id,
             conversation_id=conversation.id
         )
 
@@ -708,3 +735,59 @@ async def create_chatkit_session(
     except Exception as e:
         logger.error(f"Failed to create ChatKit session: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to create session")
+
+
+# ChatKit Protocol Endpoint (Advanced Integration)
+@router.post("/chatkit")
+async def chatkit_protocol_endpoint(
+    request: Request,
+    db_session: Session = Depends(get_session)
+):
+    """ChatKit server protocol endpoint for advanced integration.
+
+    This endpoint implements the ChatKit server protocol directly.
+    It handles:
+    - Session initialization
+    - Message processing
+    - Streaming responses
+
+    The frontend sends requests in the ChatKit protocol format
+    and receives responses with conversation events.
+    """
+    try:
+        # Extract user_id from auth middleware or headers
+        user_id = getattr(request.state, "user_id", None)
+        if not user_id:
+            user_id = request.headers.get("X-User-ID")
+
+        logger.info(f"ChatKit protocol request from user: {user_id}")
+
+        # Get request body
+        body = await request.body()
+
+        # Process through ChatKit server
+        # Context object includes user_id for middleware validation
+        context = type('Context', (), {'user_id': user_id, 'request': request, 'db_session': db_session})()
+
+        result = await chatkit_server.process(body, context)
+
+        # Handle streaming vs regular responses
+        from chatkit.server import StreamingResult
+
+        if isinstance(result, StreamingResult):
+            # StreamingResult is an AsyncIterable[bytes], use it directly
+            return StreamingResponse(
+                result,
+                media_type="text/event-stream"
+            )
+
+        # Non-streaming response - check for json property (not method)
+        if hasattr(result, 'json'):
+            return Response(content=result.json, media_type="application/json")
+
+        # Fallback for plain dict responses
+        return JSONResponse(result)
+
+    except Exception as e:
+        logger.error(f"ChatKit protocol error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))

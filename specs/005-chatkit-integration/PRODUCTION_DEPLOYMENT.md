@@ -49,11 +49,11 @@ Domain: https://task-pilot-ai-ashen.vercel.app
 
 ### 1c. Generate and Save Domain Key
 
-1. OpenAI generates a domain key (looks like: `sk_live_...`)
+1. OpenAI generates a domain key (looks like: `sk_test_...`)
 2. **Copy and save this key securely**
 3. You'll need this in Step 2
 
-**Domain Key Format**: `sk_live_[alphanumeric_string]`
+**Domain Key Format**: `sk_test_[alphanumeric_string]`
 
 ---
 
@@ -80,12 +80,12 @@ Click **Add** and create two new variables for **Production** environment:
 | Name | Value | Notes |
 |------|-------|-------|
 | `NEXT_PUBLIC_API_URL` | `https://your-backend-url.com` | Your production backend API URL (e.g., Railway, Render, custom) |
-| `NEXT_PUBLIC_CHATKIT_DOMAIN_KEY` | `sk_live_[your_key]` | The domain key from OpenAI (Step 1c) |
+| `NEXT_PUBLIC_CHATKIT_DOMAIN_KEY` | `sk_test_[your_key]` | The domain key from OpenAI (Step 1c) |
 
 **Example**:
 ```
 NEXT_PUBLIC_API_URL = https://taskpilot-api.railway.app
-NEXT_PUBLIC_CHATKIT_DOMAIN_KEY = sk_live_abc123def456ghi789jkl012mno
+NEXT_PUBLIC_CHATKIT_DOMAIN_KEY = sk_test_abc123def456ghi789jkl012mno
 ```
 
 ### 2d. Set Environment for Production
@@ -226,7 +226,7 @@ ChatKit is ready
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `NEXT_PUBLIC_API_URL` | Backend URL for API calls | `https://taskpilot-api.railway.app` |
-| `NEXT_PUBLIC_CHATKIT_DOMAIN_KEY` | Domain key from OpenAI | `sk_live_abc123...` |
+| `NEXT_PUBLIC_CHATKIT_DOMAIN_KEY` | Domain key from OpenAI | `sk_test_abc123...` |
 
 ### Local vs Production
 
@@ -239,14 +239,14 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 **Production** (Set in Vercel Dashboard):
 ```bash
 NEXT_PUBLIC_API_URL=https://your-backend-url.com
-NEXT_PUBLIC_CHATKIT_DOMAIN_KEY=sk_live_your_key_from_openai
+NEXT_PUBLIC_CHATKIT_DOMAIN_KEY=sk_test_your_key_from_openai
 ```
 
 ### Backend Configuration
 
 **backend/.env**:
 ```bash
-OPENAI_API_KEY=sk_live_your_openai_key
+OPENAI_API_KEY=sk_test_your_openai_key
 CHATKIT_WORKFLOW_ID=wf_6946b383d368819081b556e6e5fa66330d48d0c9ea4fccd8
 ```
 
