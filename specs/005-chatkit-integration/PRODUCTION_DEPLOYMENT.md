@@ -85,7 +85,7 @@ Click **Add** and create two new variables for **Production** environment:
 **Example**:
 ```
 NEXT_PUBLIC_API_URL = https://taskpilot-api.railway.app
-NEXT_PUBLIC_CHATKIT_DOMAIN_KEY = sk_test_abc123def456ghi789jkl012mno
+NEXT_PUBLIC_CHATKIT_DOMAIN_KEY = sk_test_YOUR_DOMAIN_KEY_HERE
 ```
 
 ### 2d. Set Environment for Production
