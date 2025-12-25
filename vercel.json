@@ -1,6 +1,6 @@
 {
   "buildCommand": "NEXT_DISABLE_TURBOPACK=1 npm run build",
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "npm install",
   "outputDirectory": ".next",
   "root": "frontend"
 }
