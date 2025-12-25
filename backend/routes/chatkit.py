@@ -672,6 +672,18 @@ async def create_chatkit_session(
         ChatKitSessionResponse with proper client_secret from OpenAI SDK
     """
     try:
+        # Validate origin domain is in allowlist
+        origin = request.headers.get("origin", "").lower()
+        if origin:
+            # Extract domain from origin (e.g., https://task-pilot-ai-ashen.vercel.app -> task-pilot-ai-ashen.vercel.app)
+            origin_domain = origin.replace("https://", "").replace("http://", "").split(":")[0]
+
+            # Check if origin is in allowlist
+            allowed_domains = [d.split(":")[0] for d in settings.CHATKIT_DOMAIN_ALLOWLIST]
+            if origin_domain not in allowed_domains:
+                logger.warning(f"Rejected ChatKit session request from unauthorized domain: {origin_domain}")
+                raise HTTPException(status_code=403, detail=f"Domain not allowed: {origin_domain}")
+
         # Extract user_id from request state (set by auth middleware)
         user_id = getattr(request.state, "user_id", None)
         if not user_id:
@@ -755,6 +767,18 @@ async def chatkit_protocol_endpoint(
     and receives responses with conversation events.
     """
     try:
+        # Validate origin domain is in allowlist
+        origin = request.headers.get("origin", "").lower()
+        if origin:
+            # Extract domain from origin (e.g., https://task-pilot-ai-ashen.vercel.app -> task-pilot-ai-ashen.vercel.app)
+            origin_domain = origin.replace("https://", "").replace("http://", "").split(":")[0]
+
+            # Check if origin is in allowlist
+            allowed_domains = [d.split(":")[0] for d in settings.CHATKIT_DOMAIN_ALLOWLIST]
+            if origin_domain not in allowed_domains:
+                logger.warning(f"Rejected ChatKit request from unauthorized domain: {origin_domain}")
+                raise HTTPException(status_code=403, detail=f"Domain not allowed: {origin_domain}")
+
         # Extract user_id from auth middleware or headers
         user_id = getattr(request.state, "user_id", None)
         if not user_id:
