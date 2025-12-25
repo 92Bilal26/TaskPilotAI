@@ -6,6 +6,7 @@ import { useToast } from "@/lib/useToast";
 import { Task } from "@/types";
 import { Sidebar } from "@/components/Layout/Sidebar";
 import { Header } from "@/components/Layout/Header";
+import { HeaderActions } from "@/components/Layout/HeaderActions";
 import { TaskCard } from "@/components/Tasks/TaskCard";
 import { TaskEditModal } from "@/components/Tasks/TaskEditModal";
 import { Toast } from "@/components/Toast/Toast";
@@ -192,18 +193,11 @@ export default function DashboardPage() {
           title="Task Dashboard"
           subtitle="Manage and organize your tasks efficiently"
           action={
-            <div className="flex gap-2">
-              <Button
-                onClick={() => setShowChatKit(!showChatKit)}
-                className={showChatKit ? "bg-green-600 hover:bg-green-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"}
-                title="Toggle ChatKit AI Assistant"
-              >
-                {showChatKit ? "✓ Chat Active" : "💬 Open Chat"}
-              </Button>
-              <Button onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
-                + New Task
-              </Button>
-            </div>
+            <HeaderActions
+              showChatKit={showChatKit}
+              onToggleChatKit={() => setShowChatKit(!showChatKit)}
+              onNewTask={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}
+            />
           }
         />
 
