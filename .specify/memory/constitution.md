@@ -1443,11 +1443,575 @@ Every commit checked for:
 
 ---
 
-**Version**: 3.0.0
+---
+
+# TaskPilotAI - Phase 4 Constitution
+
+**The Evolution of Todo: Local Kubernetes Deployment**
+
+Hackathon II - Phase 4 (Due: January 4, 2026) - 250 Points
+
+A spec-driven, test-first implementation of cloud-native containerization and Kubernetes orchestration using Docker, Minikube, Helm charts, and AI-assisted DevOps tools (Gordon, kubectl-ai, kagent) with Claude Code and Spec-Kit Plus.
+
+---
+
+## Phase 4 Overview
+
+| Aspect | Details |
+|---|---|
+| **Phase Name** | Phase IV: Local Kubernetes Deployment (Minikube) |
+| **Objective** | Containerize Phase 3 ChatKit application and deploy to Kubernetes using Minikube with infrastructure-as-code (Helm charts) |
+| **Due Date** | Sunday, January 4, 2026 |
+| **Points** | 250 |
+| **Key Constraints** | Docker containerization, Helm charts, Minikube deployment, AI-assisted DevOps tools, cloud-native patterns, IaC approach |
+| **Builds On** | Phase 3 (AI ChatKit application with all Phase 1-3 features) |
+
+---
+
+## Phase 4 Core Principles (Extends Phase 1, 2 & 3)
+
+### I. Spec-Driven Development (Maintained)
+Every feature must be defined in detailed specifications before implementation.
+
+### II. Test-First Development (Maintained)
+- Strict TDD with ≥95% coverage
+- All containerization and deployment verified with tests
+
+### III. Cloud-Native Architecture (NEW - Phase 4)
+**Principles:**
+- Containerized applications (Docker)
+- Orchestrated with Kubernetes
+- Infrastructure-as-Code using Helm charts
+- Stateless services (from Phase 3)
+- Horizontal scalability
+- Graceful failure handling
+
+**Rules:**
+- ❌ No monolithic deployments
+- ❌ No manual infrastructure setup
+- ✅ All infrastructure defined in Helm charts
+- ✅ Containers immutable and reproducible
+- ✅ Configuration via environment variables
+
+### IV. Docker Containerization (NEW - Phase 4)
+
+**Frontend Container:**
+- Base: `node:20-alpine`
+- Build: Multi-stage (build + production)
+- Expose: Port 3000
+- Health check: GET `/`
+
+**Backend Container:**
+- Base: `python:3.13-slim`
+- Build: Multi-stage (dependencies + runtime)
+- Expose: Port 8000
+- Health check: GET `/health`
+
+**Rules:**
+- ❌ No installing development dependencies in production images
+- ❌ No hardcoding environment variables
+- ✅ Multi-stage builds for minimal image size
+- ✅ Non-root user in containers
+- ✅ Health checks for all services
+- ✅ Proper signal handling (SIGTERM)
+
+### V. Kubernetes via Minikube (NEW - Phase 4)
+
+**Local Development:**
+- Minikube for local K8s cluster (lightweight, 2-4 CPU minimum)
+- kubectl for cluster management
+- Docker driver or VirtualBox
+
+**Deployment Model:**
+- Frontend pod (1-3 replicas)
+- Backend pod (1-3 replicas)
+- PostgreSQL service (StatefulSet)
+- Ingress controller for traffic routing
+
+**Rules:**
+- ❌ Cannot deploy to cloud (must be local Minikube)
+- ❌ Cannot use kubectl manually (must be IaC via Helm)
+- ✅ All K8s resources defined in Helm values
+- ✅ Namespace isolation
+- ✅ Resource limits and requests
+
+### VI. Helm Charts for Infrastructure-as-Code (NEW - Phase 4)
+
+**Chart Structure:**
+```
+helm/
+├── taskpilot-ai/
+│   ├── Chart.yaml
+│   ├── values.yaml
+│   ├── values-dev.yaml
+│   ├── values-prod.yaml
+│   ├── templates/
+│   │   ├── frontend-deployment.yaml
+│   │   ├── backend-deployment.yaml
+│   │   ├── postgresql-statefulset.yaml
+│   │   ├── ingress.yaml
+│   │   ├── configmap.yaml
+│   │   ├── secret.yaml
+│   │   └── _helpers.tpl
+│   └── Chart.lock
+```
+
+**Rules:**
+- ❌ No hardcoded values in templates
+- ❌ No environment-specific templates
+- ✅ All values in values.yaml (parameterized)
+- ✅ Environment-specific overrides via values-*.yaml
+- ✅ Helm hooks for migrations
+- ✅ Version pinning in Chart.lock
+
+### VII. AI-Assisted DevOps Tools (NEW - Phase 4)
+
+**Gordon (Docker AI Agent):**
+- Used for Dockerfile generation and optimization
+- Assists with Docker build troubleshooting
+- Generates best-practice multi-stage builds
+
+**kubectl-ai / kagent:**
+- Assists with Kubernetes manifest generation
+- Helps with cluster troubleshooting
+- Optimizes resource allocation
+
+**Rules:**
+- ✅ Use AI tools to generate Dockerfiles
+- ✅ Use AI tools to generate K8s manifests
+- ✅ AI assistance for performance optimization
+- ⚠️ Always review and test AI-generated code
+- ❌ Cannot blindly deploy AI-generated configs
+
+### VIII. Infrastructure-as-Code Pattern (NEW - Phase 4)
+
+**Source Control:**
+- All Dockerfiles in git
+- All Helm charts in git
+- All K8s manifests in git (generated from Helm)
+- Database migrations versioned
+
+**Reproducibility:**
+- Any developer can spin up full environment locally
+- `helm install` deploys entire stack
+- Same image SHA deployed to dev/test/prod
+
+**Rules:**
+- ❌ No manual kubectl apply commands
+- ❌ No environment-specific changes
+- ✅ Everything reproducible from git
+- ✅ Version control for all infrastructure
+
+---
+
+## Phase 4: Cloud-Native Kubernetes Features
+
+### All Phase 1-3 Features (Maintained)
+Identical functionality, now deployed in Kubernetes:
+- [x] Task CRUD operations
+- [x] User authentication
+- [x] AI chatbot via ChatKit
+- [x] Real-time synchronization
+- [x] User data isolation
+
+### Phase 4 New Features
+- [x] **Docker Containerization** – Frontend & backend images
+- [x] **Minikube Deployment** – Local K8s cluster orchestration
+- [x] **Helm Charts** – Infrastructure-as-Code
+- [x] **Multi-Container Orchestration** – Frontend + backend + database
+- [x] **Service Discovery** – K8s DNS for inter-pod communication
+- [x] **ConfigMaps & Secrets** – Environment management
+- [x] **Persistent Volumes** – PostgreSQL data persistence
+- [x] **Ingress Controller** – HTTP routing
+- [x] **Health Checks** – Liveness and readiness probes
+- [x] **Horizontal Scaling** – Replica configuration for load distribution
+- [x] **Database Migrations on Deploy** – Helm post-install hooks
+- [x] **Local Development Script** – Single command to spin up stack
+
+---
+
+## Technology Stack (Phase 4)
+
+### Containerization
+| Component | Technology | Version |
+|---|---|---|
+| **Container Runtime** | Docker | 24.0+ |
+| **Frontend Image** | node:20-alpine | Latest |
+| **Backend Image** | python:3.13-slim | Latest |
+
+### Orchestration
+| Component | Technology | Version |
+|---|---|---|
+| **Kubernetes** | Minikube | 1.35+ |
+| **CLI** | kubectl | 1.29+ |
+| **Package Manager** | Helm | 3.14+ |
+
+### Cloud-Native Tools
+| Component | Technology | Purpose |
+|---|---|---|
+| **Docker AI** | Gordon | Dockerfile optimization |
+| **K8s AI Assistant** | kubectl-ai / kagent | Manifest generation |
+
+### Infrastructure
+| Component | Technology | Notes |
+|---|---|---|
+| **Local K8s** | Minikube | Development only |
+| **Database** | PostgreSQL 15 | StatefulSet in K8s |
+| **Container Registry** | Docker (local) | No external registry |
+
+---
+
+## Project Structure (Phase 4)
+
+```
+TaskPilotAI/
+├── docker/                                 # NEW: Docker files
+│   ├── Dockerfile.frontend                 # Next.js multi-stage build
+│   ├── Dockerfile.backend                  # FastAPI multi-stage build
+│   └── .dockerignore
+│
+├── helm/                                   # NEW: Helm charts
+│   └── taskpilot-ai/
+│       ├── Chart.yaml                      # Chart metadata
+│       ├── Chart.lock                      # Dependency lock
+│       ├── values.yaml                     # Default values
+│       ├── values-dev.yaml                 # Dev overrides
+│       ├── values-prod.yaml                # Prod overrides (reference)
+│       └── templates/
+│           ├── frontend-deployment.yaml
+│           ├── backend-deployment.yaml
+│           ├── postgresql-statefulset.yaml
+│           ├── postgresql-service.yaml
+│           ├── frontend-service.yaml
+│           ├── backend-service.yaml
+│           ├── ingress.yaml
+│           ├── configmap.yaml
+│           ├── secret.yaml
+│           ├── _helpers.tpl
+│           └── NOTES.txt
+│
+├── scripts/                                # NEW: Automation scripts
+│   ├── setup-minikube.sh                   # Minikube initialization
+│   ├── build-images.sh                     # Docker build
+│   ├── deploy-helm.sh                      # Helm deployment
+│   ├── port-forward.sh                     # Local access setup
+│   └── cleanup.sh                          # Environment cleanup
+│
+├── k8s/                                    # NEW: Raw K8s manifests (reference)
+│   └── generated/                          # Auto-generated from Helm
+│
+├── docs/                                   # Phase 3 docs + new K8s docs
+│   ├── KUBERNETES-SETUP.md                 # NEW: Minikube setup guide
+│   ├── HELM-DEPLOYMENT.md                  # NEW: Helm chart guide
+│   ├── DOCKER-BUILD.md                     # NEW: Docker build guide
+│   ├── LOCAL-DEVELOPMENT.md                # NEW: Full local dev setup
+│   └── TROUBLESHOOTING.md                  # NEW: K8s troubleshooting
+│
+├── specs/
+│   ├── phase-4-overview.md                 # NEW: Phase 4 specification
+│   ├── deployment/                         # NEW: Deployment specs
+│   │   ├── docker-requirements.md
+│   │   ├── kubernetes-requirements.md
+│   │   └── helm-charts.md
+│   └── ...existing Phase 1-3 specs...
+│
+├── frontend/                               # Unchanged, containerized
+├── backend/                                # Unchanged, containerized
+├── .specify/
+│   └── memory/
+│       └── constitution.md                 # This file (v4.0.0)
+│
+└── README.md                               # Updated with K8s instructions
+```
+
+---
+
+## Quality Gates (ALL REQUIRED for Phase 4)
+
+### Specification Gates
+- ✅ Phase 4 overview specification complete
+- ✅ Docker requirements documented
+- ✅ Kubernetes deployment specification defined
+- ✅ Helm chart specifications detailed
+- ✅ Local development setup documented
+- ✅ All K8s resources documented
+
+### Containerization Gates
+- ✅ Frontend Dockerfile builds successfully
+- ✅ Backend Dockerfile builds successfully
+- ✅ Images are minimal (Alpine/slim bases)
+- ✅ Multi-stage builds implemented
+- ✅ Health checks included
+- ✅ Non-root user configured
+- ✅ No hardcoded environment variables
+
+### Kubernetes Gates
+- ✅ Minikube cluster starts successfully
+- ✅ All pods deploy and reach Running state
+- ✅ Service discovery works
+- ✅ ConfigMaps applied correctly
+- ✅ Secrets configured
+- ✅ Persistent volumes mount
+- ✅ Health checks pass
+
+### Helm Gates
+- ✅ Chart.yaml valid
+- ✅ All templates render without errors
+- ✅ Values parameterization complete
+- ✅ `helm lint` passes
+- ✅ `helm install` succeeds
+- ✅ Environment-specific values work
+- ✅ Helm hooks for migrations execute
+
+### Deployment Gates
+- ✅ Single command deploys entire stack
+- ✅ All Phase 1-3 features functional in K8s
+- ✅ Frontend accessible via ingress
+- ✅ Backend API responds
+- ✅ Database persists data
+- ✅ Pods restart gracefully
+- ✅ Scaling replicas works
+
+### Documentation Gates
+- ✅ Setup instructions clear and complete
+- ✅ Troubleshooting guide comprehensive
+- ✅ Examples provided for all operations
+- ✅ Architecture diagrams included
+- ✅ README updated
+
+---
+
+## Non-Negotiable Rules (Phase 4)
+
+- ❌ Cannot deploy to cloud (must be Minikube only)
+- ❌ Cannot use manual kubectl apply (must use Helm)
+- ❌ Cannot hardcode configuration in images
+- ❌ Cannot skip health checks
+- ❌ Cannot use root user in containers
+- ❌ Cannot implement Phase 5+ features
+- ❌ Cannot violate Phase 1-3 principles
+- ❌ Cannot skip IaC (everything in code)
+- ❌ Cannot deploy without all quality gates passing
+- ❌ Cannot modify constitution without approval
+
+---
+
+## Success Criteria (Phase 4 Complete When)
+
+### Implementation
+- ✅ Frontend Docker image builds and runs
+- ✅ Backend Docker image builds and runs
+- ✅ Docker Compose works for local testing
+- ✅ Minikube cluster configured
+- ✅ Helm charts created and validated
+- ✅ All K8s resources deployed
+- ✅ Ingress configured for local access
+
+### Functionality
+- ✅ All Phase 1-3 features work in K8s
+- ✅ Database persists data across pod restarts
+- ✅ Service discovery works (frontend talks to backend)
+- ✅ Horizontal scaling: replicas can be increased
+- ✅ Graceful shutdown: pods drain connections
+- ✅ Health checks: pods restart on failure
+
+### Configuration
+- ✅ ConfigMaps for non-sensitive config
+- ✅ Secrets for sensitive data
+- ✅ Environment-specific value files
+- ✅ Resource limits and requests set
+- ✅ Namespace configured
+
+### Deployment
+- ✅ Single `helm install` deploys entire stack
+- ✅ `setup-minikube.sh` initializes cluster
+- ✅ `deploy-helm.sh` deploys application
+- ✅ `port-forward.sh` provides local access
+- ✅ `cleanup.sh` removes all resources
+
+### Documentation
+- ✅ Setup guide (Minikube + Docker + Helm)
+- ✅ Helm deployment guide
+- ✅ Troubleshooting guide
+- ✅ Architecture diagrams
+- ✅ Local development instructions
+- ✅ All scripts documented
+
+### Quality
+- ✅ All tests from Phase 1-3 still pass
+- ✅ New K8s integration tests added
+- ✅ Docker image scanning for vulnerabilities
+- ✅ Helm chart linting passes
+- ✅ No hardcoded secrets in git
+
+---
+
+## Key Architectural Decisions
+
+### Decision 1: Minikube for Local Development
+- **Chosen:** Minikube (local K8s cluster)
+- **Rationale:** Free, lightweight, no cloud costs, mirrors production K8s
+- **Alternative rejected:** Kind, Microk8s (less compatible with prod)
+
+### Decision 2: Helm for Infrastructure-as-Code
+- **Chosen:** Helm charts for K8s deployment
+- **Rationale:** Standard, reusable, parameterized, declarative
+- **Alternative rejected:** Kustomize, raw K8s manifests (more verbose)
+
+### Decision 3: Multi-Stage Docker Builds
+- **Chosen:** Separate build and runtime stages
+- **Rationale:** Minimal image size, security, faster pulls
+- **Alternative rejected:** Single-stage (larger images)
+
+### Decision 4: StatefulSet for PostgreSQL
+- **Chosen:** K8s StatefulSet with PersistentVolume
+- **Rationale:** Database needs stable storage, networking
+- **Alternative rejected:** Running outside K8s (defeats orchestration purpose)
+
+### Decision 5: AI-Assisted DevOps
+- **Chosen:** Gordon, kubectl-ai, kagent for code generation
+- **Rationale:** Faster development, consistent patterns
+- **Alternative rejected:** Manual manifest writing (slower, error-prone)
+
+---
+
+## Development Workflow (Phase 4)
+
+### Step 1: Create Docker Images
+```bash
+# Write Dockerfile.frontend and Dockerfile.backend
+# Use Gordon (Docker AI) to optimize
+docker build -f docker/Dockerfile.frontend -t taskpilot-frontend .
+docker build -f docker/Dockerfile.backend -t taskpilot-backend .
+```
+
+### Step 2: Create Helm Charts
+```bash
+# Use kubectl-ai to generate K8s manifests
+# Convert to Helm chart structure
+helm create helm/taskpilot-ai
+# Customize templates and values.yaml
+```
+
+### Step 3: Deploy to Minikube
+```bash
+./scripts/setup-minikube.sh
+./scripts/build-images.sh
+./scripts/deploy-helm.sh
+./scripts/port-forward.sh
+# Access application at localhost:3000
+```
+
+### Step 4: Verify Deployment
+```bash
+kubectl get pods -n taskpilot
+kubectl logs pod/taskpilot-frontend-xxxxx
+kubectl get services -n taskpilot
+# Test application functionality
+```
+
+### Step 5: Scale and Test
+```bash
+# Increase replicas
+helm upgrade taskpilot-ai helm/taskpilot-ai/ --set frontend.replicas=3
+# Verify load balancing
+# Test failure recovery (kill pod, watch restart)
+```
+
+---
+
+## Testing Strategy (Phase 4)
+
+### Docker Image Tests
+- ✅ Images build without errors
+- ✅ Containers start successfully
+- ✅ Health checks pass
+- ✅ Environment variables propagate
+- ✅ Log output readable
+- ✅ Signal handling (SIGTERM) works
+
+### Kubernetes Tests
+- ✅ Helm chart linting passes
+- ✅ Helm install succeeds
+- ✅ All pods reach Running state
+- ✅ Services accessible
+- ✅ ConfigMaps/Secrets applied
+- ✅ PersistentVolumes mount
+- ✅ Liveness probes trigger restarts
+- ✅ Readiness probes prevent traffic
+
+### Integration Tests
+- ✅ Frontend talks to backend
+- ✅ Backend talks to database
+- ✅ All Phase 1-3 features work
+- ✅ Data persists across pod restarts
+- ✅ Horizontal scaling works
+- ✅ Graceful shutdown works
+
+### Deployment Tests
+- ✅ Scripts execute without errors
+- ✅ Single command deploys everything
+- ✅ Cleanup script removes all resources
+- ✅ Multiple deployments idempotent
+
+---
+
+## Monitoring & Observability (Phase 4)
+
+**Minimum Required:**
+- ✅ Pod logs accessible via `kubectl logs`
+- ✅ Health endpoints available (`/health`, `/metrics`)
+- ✅ Resource usage visible via `kubectl top`
+
+**Future Enhancements (Phase 5+):**
+- Prometheus monitoring
+- Grafana dashboards
+- ELK stack logging
+- Jaeger tracing
+
+---
+
+## Governance (Phase 4)
+
+### Constitution Authority
+This Phase 4 constitution extends Phase 1-3 and is the source of truth for Phase 4 development.
+
+### Amendment Process
+Changes require:
+1. Proposal with rationale
+2. Impact analysis
+3. User approval
+
+### Compliance Verification
+Every commit checked:
+- Specs complete
+- Dockerfiles valid
+- Helm charts valid
+- Quality gates pass
+- No scope creep
+- Tests cover changes
+- No hardcoded secrets
+
+---
+
+## Timeline
+
+| Date | Milestone | Status |
+|---|---|---|
+| Dec 7, 2025 | Phase 1 Complete | ✅ |
+| Dec 14, 2025 | Phase 2 Complete | ✅ |
+| Dec 21, 2025 | Phase 3 Complete | ✅ |
+| Jan 4, 2026 | Phase 4 Due | ⏳ Target |
+| Jan 18, 2026 | Phase 5 Due | Future |
+
+---
+
+**Version**: 4.0.0
 **Ratified**: 2025-12-07 (Phase 1 & 2)
-**Last Amended**: 2025-12-14 (Phase 3 Addition)
-**Status**: Active for Phase 1, Phase 2, & Phase 3
-**Next Review**: Post Phase 3 Completion
+**Last Amended**: 2025-12-21 (Phase 3 Addition)
+**Phase 4 Added**: 2025-12-27
+**Status**: Active for Phase 1, 2, 3, & 4
+**Next Review**: Post Phase 4 Completion
 
 ---
 
@@ -1458,12 +2022,23 @@ Every commit checked for:
 - [OpenAI Agents SDK Documentation](https://platform.openai.com/docs/guides/agents-sdk)
 - [Model Context Protocol Specification](https://modelcontextprotocol.io)
 - [Official MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk)
-- [Domain Allowlist Settings](https://platform.openai.com/settings/organization/security/domain-allowlist)
+- [Docker Documentation](https://docs.docker.com/)
+- [Kubernetes Official Documentation](https://kubernetes.io/docs/)
+- [Minikube Getting Started](https://minikube.sigs.k8s.io/docs/start/)
+- [Helm Documentation](https://helm.sh/docs/)
+
+### AI-Assisted DevOps Tools
+- [Gordon - Docker AI Agent](https://www.docker.com/products/ai-agents/)
+- [kubectl-ai - Kubernetes AI Assistant](https://github.com/sorenisanerd/kubectl-ai)
+- [kagent - Kubernetes Agent](https://github.com/kubernetes-sigs/kwok)
 
 ### Reference Documents in Project
 - `/docs/REFERENCE-OPENAI-CHATKIT.md` – ChatKit implementation guide
 - `/docs/REFERENCE-OPENAI-AGENTS-SDK.md` – Agents SDK guide
 - `/docs/REFERENCE-MCP-PROTOCOL.md` – MCP protocol guide
+- `/specs/phase-4-overview.md` – Phase 4 detailed specification
+- `/docs/KUBERNETES-SETUP.md` – Minikube setup guide
+- `/docs/HELM-DEPLOYMENT.md` – Helm chart deployment guide
 
 ### Hackathon Documentation
 - `/hakcathon_2_doc.md` – Original hackathon requirements
