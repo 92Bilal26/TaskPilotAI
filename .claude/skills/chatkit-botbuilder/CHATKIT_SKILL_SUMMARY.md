@@ -147,6 +147,12 @@ This skill enables Claude to help you:
    - Security best practices
    - Testing strategies
 
+6. **Deploy ChatKit to production (Vercel + Render)**
+   - OpenAI domain verification setup
+   - Environment variable configuration
+   - CORS and security headers
+   - Multi-environment management
+
 ## 🎓 Learning Value
 
 This skill demonstrates:
@@ -157,6 +163,8 @@ This skill demonstrates:
 - **Tool Integration** - MCP tools, tool wrappers, automatic parameter injection
 - **Real-Time Systems** - Auto-refresh, polling, synchronization
 - **Production Patterns** - Error handling, logging, testing, debugging
+- **OpenAI Domain Verification** - ChatKit SDK domain verification for production deployments
+- **Multi-Platform Deployment** - Vercel frontend + Render backend configuration
 
 ## ✨ Examples Included
 
@@ -166,6 +174,60 @@ This skill demonstrates:
 - FastAPI ChatKit endpoint implementation
 - Database queries with user_id filtering
 - User isolation verification tests
+
+## 🔐 Production Deployment Guide (NEW)
+
+### OpenAI Domain Verification for ChatKit SDK
+
+When deploying ChatKit to production, the official `@openai/chatkit-react` SDK requires domain verification:
+
+#### Problem Solved
+```
+Error: Domain verification failed for https://task-pilot-ai-ashen.vercel.app
+POST https://api.openai.com/v1/chatkit/domain_keys/verify 400 (Bad Request)
+```
+
+#### Solution: OpenAI Domain Registration
+
+1. **Register Domain at OpenAI Platform**
+   - Go to: https://platform.openai.com/settings/organization/security/domain-allowlist
+   - Click "+ Add domain"
+   - Enter your production domain (e.g., `task-pilot-ai-ashen.vercel.app`)
+   - OpenAI generates a **public key** (e.g., `domain_pk_694d951d300881908730eaa457e5605809652cfa18d7a99a`)
+
+2. **Configure Frontend (chatkit-config.ts)**
+   ```typescript
+   // Use the PUBLIC KEY from OpenAI as the domainKey
+   const DOMAIN_PUBLIC_KEY = process.env.NEXT_PUBLIC_DOMAIN_PUBLIC_KEY || 'domain_pk_694d951d300881908730eaa457e5605809652cfa18d7a99a'
+
+   // IMPORTANT: domainKey must be the actual public key, NOT a custom identifier
+   const DOMAIN_KEY = DOMAIN_PUBLIC_KEY
+
+   export const chatKitConfig: UseChatKitOptions = {
+     api: {
+       url: API_URL,
+       domainKey: DOMAIN_KEY,  // Must be OpenAI's public key
+       fetch: authenticatedFetch,
+     },
+     // ... rest of config
+   }
+   ```
+
+3. **Add Environment Variables to Vercel**
+   - `NEXT_PUBLIC_DOMAIN_PUBLIC_KEY` = `domain_pk_...` (from OpenAI)
+   - `NEXT_PUBLIC_API_URL` = Your backend URL
+   - `NEXT_PUBLIC_OPENAI_API_KEY` = Optional (if frontend needs direct OpenAI access)
+
+4. **Render Backend Configuration**
+   - `OPENAI_API_KEY` = Your OpenAI API key (for agent execution)
+   - `CHATKIT_DOMAIN_ALLOWLIST` = List of allowed domains
+   - `CORS_ORIGINS` = Include Vercel URL
+
+#### Key Insights
+- ❌ **DON'T** use custom domain identifiers (e.g., `'taskpilot-production'`)
+- ✅ **DO** use the actual public key from OpenAI's domain registration
+- ✅ The SDK validates this key against OpenAI's registry
+- ✅ 400 error means wrong domain key - check OpenAI platform registration
 
 ## 🔗 Related Skills
 
@@ -194,19 +256,69 @@ You've successfully used this skill when:
 - ✅ Real-time sync works between ChatKit and UI
 - ✅ All security checks pass
 
-## 🆘 Support
+## 🆘 Support & Troubleshooting
+
+### Common Issues & Solutions
+
+#### Issue 1: Domain Verification Error (Production)
+**Error:** `Domain verification failed for https://yourapp.vercel.app`
+- ❌ Problem: Using custom domain key instead of OpenAI's public key
+- ✅ Solution: Register domain at https://platform.openai.com/settings/organization/security/domain-allowlist
+- ✅ Use the generated public key in `chatkit-config.ts`
+- ✅ Add `NEXT_PUBLIC_DOMAIN_PUBLIC_KEY` to Vercel environment
+
+#### Issue 2: 400 Bad Request on Domain Verification
+**Error:** `POST https://api.openai.com/v1/chatkit/domain_keys/verify 400`
+- ❌ Problem: Domain key format is wrong
+- ✅ Solution: Verify `domainKey` is in format `domain_pk_...` (not custom string)
+- ✅ Check OpenAI platform - copy exact public key shown there
+
+#### Issue 3: ChatKit Works Locally but Not in Production
+**Error:** Works on `localhost:3000` but fails on production domain
+- ℹ️ Reason: Localhost bypasses domain verification in dev
+- ✅ Solution: Register production domain at OpenAI platform (see Production Deployment Guide)
+
+### General Troubleshooting Steps
 
 If you encounter issues:
 
-1. Check "Common Issues & Solutions" in SKILL.md
-2. Review relevant reference guide (backend, frontend, wrapper, isolation)
-3. Verify each component against checklists
-4. Enable debug logging to trace requests
-5. Test each isolation level separately
+1. **Check Environment Variables**
+   - Vercel: Settings → Environment Variables
+   - Render: Settings → Environment
+   - Verify all `NEXT_PUBLIC_*` variables are set
+
+2. **Review Documentation**
+   - SKILL.md - Common Issues & Solutions section
+   - Reference guides (backend, frontend, wrapper, isolation)
+
+3. **Verify Checklist Items**
+   - Each component against implementation checklists
+   - Domain registration at OpenAI platform
+   - Correct public key in `chatkit-config.ts`
+
+4. **Enable Debug Logging**
+   - Check browser console (F12) for errors
+   - Check Render logs for backend issues
+   - Look for specific error codes (400, 401, 403, 404)
+
+5. **Test Each Component**
+   - Test backend locally first
+   - Test frontend locally with mock API
+   - Test isolation level separately
+   - Test domain verification with curl/postman
 
 ---
 
 **Status:** ✅ Complete and Validated
 **Created:** 2025-12-25
-**Version:** 1.0
-**Validation:** Passed skill-creator validation
+**Updated:** 2025-12-27
+**Version:** 1.1
+**Validation:** Passed skill-creator validation + Production Deployment (Vercel + Render)
+
+### Recent Updates (v1.1)
+- ✅ Added Production Deployment Guide for OpenAI domain verification
+- ✅ Documented domain registration process and public key configuration
+- ✅ Added troubleshooting for domain verification errors
+- ✅ Included Vercel + Render environment variable setup
+- ✅ Added 3 common production deployment issues and solutions
+- ✅ Real-world validation: TaskPilotAI Phase 3 ChatKit integration
